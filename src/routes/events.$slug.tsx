@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Calendar, Clock, MapPin, Users, Ticket as TicketIcon, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,11 +86,22 @@ function EventDetailPage() {
   const register = useServerFn(registerForFreeEvent);
   const preparePaid = useServerFn(preparePaidEventCheckout);
   const verifyPaid = useServerFn(verifyPaidEventCheckout);
+  const calcPricing = useServerFn(calculateCheckoutPricing);
   const { open: openRazorpay } = useRazorpayCheckout();
+  
   const [prn, setPrn] = useState("");
   const [phone, setPhone] = useState("");
+  const [couponCode, setCouponCode] = useState("");
+  const [couponApplied, setCouponApplied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
+
+  const [pricing, setPricing] = useState({
+    basePrice: Number(event.price_inr) || 0,
+    discount: 0,
+    gstAmount: 0,
+    totalPayable: Number(event.price_inr) || 0,
+  });
 
   const { data: regCount = 0 } = useQuery({
     queryKey: ["event-reg-count", event.id],
@@ -103,6 +114,55 @@ function EventDetailPage() {
       return count ?? 0;
     },
   });
+
+  // Calculate pricing initially
+  useEffect(() => {
+    if (event.is_paid && Number(event.price_inr) > 0) {
+      calcPricing({ data: { eventId: event.id } }).then((res) => {
+        setPricing({
+          basePrice: res.basePrice,
+          discount: res.discount,
+          gstAmount: res.gstAmount,
+          totalPayable: res.totalPayable,
+        });
+      });
+    }
+  }, [event]);
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    try {
+      const res = await calcPricing({
+        data: { eventId: event.id, couponCode: couponCode.trim().toUpperCase() },
+      });
+      setPricing({
+        basePrice: res.basePrice,
+        discount: res.discount,
+        gstAmount: res.gstAmount,
+        totalPayable: res.totalPayable,
+      });
+      if (res.discount > 0) {
+        setCouponApplied(true);
+        toast.success("Coupon code applied successfully!");
+      } else {
+        toast.error("Invalid coupon code or not applicable.");
+      }
+    } catch (e: any) {
+      toast.error(e.message || "Failed to validate coupon");
+    }
+  };
+
+  const handleRemoveCoupon = async () => {
+    setCouponApplied(false);
+    setCouponCode("");
+    const res = await calcPricing({ data: { eventId: event.id } });
+    setPricing({
+      basePrice: res.basePrice,
+      discount: res.discount,
+      gstAmount: res.gstAmount,
+      totalPayable: res.totalPayable,
+    });
+  };
 
   const { data: existing } = useQuery({
     queryKey: ["my-reg", event.id, user?.id],
@@ -131,9 +191,14 @@ function EventDetailPage() {
     }
     setSubmitting(true);
     try {
-      if (event.is_paid && Number(event.price_inr) > 0) {
+      if (event.is_paid && pricing.totalPayable > 0) {
         const prep = await preparePaid({
-          data: { eventId: event.id, prn, phone: phone || undefined },
+          data: {
+            eventId: event.id,
+            prn,
+            phone: phone || undefined,
+            couponCode: couponApplied ? couponCode.trim().toUpperCase() : undefined,
+          },
         });
         await openRazorpay({
           keyId: prep.keyId,
@@ -165,7 +230,7 @@ function EventDetailPage() {
                 navigate({ to: "/my-tickets" });
               }
             } catch (err: any) {
-              toast.error(err?.message || "Payment received but verification failed. We will reconcile shortly.");
+              toast.error(err?.message || "Payment verification failed.");
             }
           },
           onDismiss: () => {
@@ -173,6 +238,7 @@ function EventDetailPage() {
           },
         });
       } else {
+        // Free registration
         const res = await register({ data: { eventId: event.id, prn, phone: phone || undefined } });
         toast.success("Registered! Your QR ticket is ready.");
         navigate({ to: "/tickets/$id", params: { id: res.ticketId } });
@@ -341,7 +407,7 @@ function EventDetailPage() {
                 )}
               </div>
             ) : (
-              <form onSubmit={handleRegister} className="mt-6 space-y-3">
+              <form onSubmit={handleRegister} className="mt-6 space-y-4">
                 <div>
                   <Label htmlFor="prn">PRN <span className="text-destructive">*</span></Label>
                   <Input
@@ -349,13 +415,14 @@ function EventDetailPage() {
                     placeholder="e.g. TGP24001"
                     value={prn}
                     onChange={(e) => setPrn(e.target.value)}
-                    className="mt-1.5 rounded-xl"
+                    className="mt-1.5 rounded-xl text-xs"
                     required
                   />
-                  <p className="mt-1 text-[11px] text-muted-foreground">
+                  <p className="mt-1 text-[10px] text-muted-foreground">
                     Verified against the official student list.
                   </p>
                 </div>
+                
                 <div>
                   <Label htmlFor="phone">Phone (optional)</Label>
                   <Input
@@ -363,22 +430,85 @@ function EventDetailPage() {
                     placeholder="+91 ..."
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    className="mt-1.5 rounded-xl"
+                    className="mt-1.5 rounded-xl text-xs"
                   />
                 </div>
+
+                {/* Coupon Code section */}
+                {event.is_paid && Number(event.price_inr) > 0 && (
+                  <div className="space-y-1.5 border-t border-border/40 pt-3">
+                    <Label htmlFor="coupon" className="text-xs">Coupon Code</Label>
+                    <div className="flex gap-2">
+                      <Input
+                        id="coupon"
+                        placeholder="ENTER CODE"
+                        value={couponCode}
+                        onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                        disabled={couponApplied}
+                        className="rounded-xl h-9 text-xs font-semibold tracking-wider"
+                      />
+                      {couponApplied ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleRemoveCoupon}
+                          className="rounded-xl h-9 text-xs font-bold border-destructive/30 text-destructive hover:bg-destructive/5 shrink-0 cursor-pointer"
+                        >
+                          Remove
+                        </Button>
+                      ) : (
+                        <Button
+                          type="button"
+                          onClick={handleApplyCoupon}
+                          disabled={!couponCode.trim()}
+                          className="rounded-xl h-9 text-xs font-bold bg-primary text-white hover:bg-primary/90 shrink-0 cursor-pointer"
+                        >
+                          Apply
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Pricing Breakdown breakdown */}
+                {event.is_paid && Number(event.price_inr) > 0 && (
+                  <div className="space-y-2.5 rounded-2xl bg-muted/40 p-4 border border-border/50 text-xs">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Event Price</span>
+                      <span>₹{pricing.basePrice.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                    </div>
+                    {pricing.discount > 0 && (
+                      <div className="flex justify-between text-success font-semibold">
+                        <span>Discount</span>
+                        <span>-₹{pricing.discount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                      </div>
+                    )}
+                    {pricing.gstAmount > 0 && (
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>GST ({event.gst_percent || 18}%)</span>
+                        <span>+₹{pricing.gstAmount.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between border-t border-border/80 pt-2 font-bold text-sm text-foreground">
+                      <span>Total Payable</span>
+                      <span>₹{pricing.totalPayable.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                    </div>
+                  </div>
+                )}
+
                 <Button
                   type="submit"
                   disabled={submitting}
-                  className="mt-2 h-11 w-full rounded-full bg-gradient-brand text-base font-semibold text-white shadow-glow hover:opacity-90"
+                  className="mt-2 h-11 w-full rounded-full bg-gradient-brand text-base font-semibold text-white shadow-glow hover:opacity-90 cursor-pointer"
                 >
                   {submitting
                     ? "Processing..."
-                    : event.is_paid && Number(event.price_inr) > 0
-                    ? `Pay ₹${event.price_inr}`
+                    : event.is_paid && pricing.totalPayable > 0
+                    ? `Pay ₹${pricing.totalPayable.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`
                     : "Register — it's free"}
                 </Button>
                 {!user && (
-                  <p className="text-center text-[11px] text-muted-foreground">
+                  <p className="text-center text-[10px] text-muted-foreground">
                     You'll need to sign in to complete registration.
                   </p>
                 )}

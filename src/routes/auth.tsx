@@ -1,13 +1,17 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { z } from "zod";
-import { useState } from "react";
-import { Mail, ArrowRight, Calendar } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Mail, ArrowRight, Calendar, Loader2, Sparkles, AlertCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useAuth } from "@/components/auth-provider";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { motion, AnimatePresence } from "framer-motion";
+import { useServerFn } from "@tanstack/react-start";
+import { logUserLoginEvent } from "@/lib/auth-security.functions";
 
 const SearchSchema = z.object({ redirect: z.string().optional() });
 
@@ -16,98 +20,175 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in — CampusConnect" },
-      { name: "description", content: "Sign in to register for events, get tickets, and earn certificates." },
+      { name: "description", content: "Sign in using Google or secure passwordless Email OTP to join events." },
     ],
   }),
   component: AuthPage,
 });
 
+const LOGO = "https://res.cloudinary.com/dsqxboxoc/image/upload/v1782801547/campus_logo_oj2pcn.png";
+
 function AuthPage() {
   const { redirect } = Route.useSearch();
-  
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const { refresh } = useAuth();
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [fullName, setFullName] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [step, setStep] = useState<"email" | "otp" | "success">("email");
   const [busy, setBusy] = useState(false);
+  const [timer, setTimer] = useState(0);
+  
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const logLogin = useServerFn(logUserLoginEvent);
 
-  const goNext = async () => {
-    if (redirect && redirect.startsWith("/")) {
-      window.location.href = redirect;
-      return;
+  // Timer effect for Resend OTP button
+  useEffect(() => {
+    if (timer > 0) {
+      timerRef.current = setTimeout(() => setTimer(timer - 1), 1000);
     }
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [timer]);
 
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const uid = session?.user?.id;
-      if (!uid) {
-        window.location.href = "/student";
-        return;
-      }
-
-      // Query roles
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", uid);
-
-      const roleNames = (roles ?? []).map((r: any) => r.role);
-
-      if (roleNames.includes("super_admin")) {
-        window.location.href = "/super-admin";
-      } else if (roleNames.includes("college_admin") || roleNames.includes("organizer")) {
-        window.location.href = "/admin";
-      } else if (roleNames.includes("scanner")) {
-        window.location.href = "/admin/scanner";
-      } else {
-        window.location.href = "/student";
-      }
-    } catch (e) {
-      console.error("Redirect resolution failed", e);
-      window.location.href = "/student";
-    }
+  const startOtpTimer = () => {
+    setTimer(60);
   };
-
 
   const handleGoogle = async () => {
     setBusy(true);
     try {
-      const r = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-      if (r.error) {
-        toast.error("Google sign-in failed");
-        setBusy(false);
-        return;
-      }
-      if (r.redirected) return;
-      goNext();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin + "/student",
+        },
+      });
+      if (error) throw error;
     } catch (e: any) {
-      toast.error(e?.message ?? "Sign-in failed");
+      toast.error(e?.message ?? "Google sign-in failed");
       setBusy(false);
     }
   };
 
-  const handleEmail = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSendOtp = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!email.trim() || !email.includes("@")) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
     setBusy(true);
     try {
-      if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email,
-          password,
-          options: {
-            emailRedirectTo: window.location.origin,
-            data: { full_name: fullName },
-          },
-        });
-        if (error) throw error;
-        toast.success("Account created. You're signed in.");
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-      }
-      goNext();
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email.trim(),
+        options: {
+          shouldCreateUser: true,
+          emailRedirectTo: window.location.origin,
+        },
+      });
+
+      if (error) throw error;
+
+      toast.success("Security code sent to your email!");
+      setStep("otp");
+      startOtpTimer();
     } catch (err: any) {
-      toast.error(err?.message ?? "Authentication failed");
+      toast.error(err?.message ?? "Failed to send OTP.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // Auto-submit OTP when length reaches 6 digits
+  useEffect(() => {
+    if (otpCode.length === 6) {
+      handleVerifyOtp();
+    }
+  }, [otpCode]);
+
+  const handleVerifyOtp = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (otpCode.length !== 6) return;
+
+    setBusy(true);
+    try {
+      const { error } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: otpCode,
+        type: "email",
+      });
+
+      if (error) throw error;
+
+      // Log login event via server function
+      try {
+        await logLogin({ data: { method: "email_otp" } });
+      } catch (err) {
+        console.error("Failed to write login audit log:", err);
+      }
+
+      setStep("success");
+      await refresh();
+
+      // Trigger navigation after success animation
+      setTimeout(async () => {
+        // Evaluate redirects and MFA checks
+        const { data: { session } } = await supabase.auth.getSession();
+        const uid = session?.user?.id;
+        if (!uid) {
+          navigate({ to: "/student" });
+          return;
+        }
+
+        const [{ data: rolesData }, { data: mfaInfo }] = await Promise.all([
+          supabase.from("user_roles").select("role").eq("user_id", uid),
+          supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+        ]);
+
+        const rolesList = (rolesData ?? []).map(r => r.role);
+        const hasAdminRole = rolesList.some(r => ["super_admin", "college_admin", "organizer"].includes(r));
+
+        // Redirect policy matching layout check
+        if (hasAdminRole) {
+          if (mfaInfo?.nextLevel === "aal1") {
+            navigate({ to: "/auth/mfa-enroll" });
+            return;
+          }
+          if (mfaInfo?.nextLevel === "aal2" && mfaInfo?.currentLevel === "aal1") {
+            navigate({ to: "/auth/mfa-verify" });
+            return;
+          }
+        } else {
+          // Student / Volunteer
+          if (mfaInfo?.nextLevel === "aal2" && mfaInfo?.currentLevel === "aal1") {
+            navigate({ to: "/auth/mfa-verify" });
+            return;
+          }
+        }
+
+        // If redirect param is set, route there
+        if (redirect && redirect.startsWith("/")) {
+          window.location.href = redirect;
+          return;
+        }
+
+        // Default role based dashboards
+        if (rolesList.includes("super_admin")) {
+          window.location.href = "/super-admin";
+        } else if (rolesList.includes("college_admin") || rolesList.includes("organizer")) {
+          window.location.href = "/admin";
+        } else if (rolesList.includes("scanner")) {
+          window.location.href = "/admin/scanner";
+        } else {
+          window.location.href = "/student";
+        }
+      }, 1500);
+
+    } catch (err: any) {
+      toast.error(err?.message ?? "Invalid or expired verification code.");
+      setOtpCode(""); // reset
     } finally {
       setBusy(false);
     }
@@ -115,125 +196,208 @@ function AuthPage() {
 
   return (
     <div className="grid min-h-screen lg:grid-cols-2">
-      {/* Left side: hero */}
+      {/* Left side: branding/hero panel */}
       <div className="relative hidden overflow-hidden bg-gradient-brand lg:block">
-        <div className="absolute inset-0 bg-gradient-mesh opacity-40" />
+        <div className="absolute inset-0 bg-gradient-mesh opacity-30" />
         <div className="relative z-10 flex h-full flex-col justify-between p-12 text-white">
           <div className="flex items-center gap-2">
-            <div className="grid h-9 w-9 place-items-center rounded-xl bg-white/20 backdrop-blur">
-              <Calendar className="h-5 w-5" />
-            </div>
-            <span className="font-display text-lg font-bold">CampusConnect</span>
+            <img src={LOGO} alt="" className="h-9 w-9 rounded-xl object-contain shadow-glow-sm" />
+            <span className="font-display text-lg font-bold tracking-tight">CampusConnect</span>
           </div>
           <div>
-            <h1 className="font-display text-4xl font-bold leading-tight">
+            <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur">
+              <Sparkles className="h-3.5 w-3.5 text-yellow-300" /> Production-Ready Identity Gate
+            </div>
+            <h1 className="mt-4 font-display text-4xl font-bold leading-tight max-w-lg">
               The official events platform for your college.
             </h1>
-            <p className="mt-4 max-w-md text-white/90">
-              Register for events in seconds, carry a secure QR ticket on your phone, and earn
-              certificates after every attendance.
+            <p className="mt-4 max-w-md text-white/80 text-sm leading-relaxed">
+              Register for events in seconds, carry a secure QR ticket on your phone, and earn verifiable certificates after every attendance.
             </p>
           </div>
-          <div className="text-sm text-white/70">© CampusConnect</div>
+          <div className="text-xs text-white/50">© CampusConnect. Secure authentication powered by Supabase Auth.</div>
         </div>
       </div>
 
-      {/* Right side: form */}
-      <div className="flex items-center justify-center bg-background p-6 sm:p-12">
-        <div className="w-full max-w-md">
-          <h2 className="font-display text-3xl font-bold tracking-tight">
-            {mode === "signin" ? "Welcome back" : "Create your account"}
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {mode === "signin"
-              ? "Sign in to manage your tickets and registrations."
-              : "Use your college email so we can verify your PRN."}
-          </p>
+      {/* Right side: Login forms */}
+      <div className="flex items-center justify-center bg-background p-6 sm:p-12 relative overflow-hidden">
+        {/* Animated Background Mesh for glassmorphism layout */}
+        <div className="absolute top-1/4 left-1/4 -z-10 h-72 w-72 rounded-full bg-primary/5 blur-3xl" />
+        <div className="absolute bottom-1/4 right-1/4 -z-10 h-72 w-72 rounded-full bg-blue-500/5 blur-3xl" />
 
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleGoogle}
-            disabled={busy}
-            className="mt-6 h-11 w-full rounded-full font-medium"
-          >
-            <GoogleIcon className="mr-2 h-4 w-4" /> Continue with Google
-          </Button>
+        <div className="w-full max-w-md bg-card/40 border border-border/60 p-8 rounded-3xl backdrop-blur-xl shadow-elevated">
+          <AnimatePresence mode="wait">
+            
+            {step === "email" && (
+              <motion.div
+                key="email-step"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6"
+              >
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 lg:hidden mb-2">
+                    <img src={LOGO} alt="" className="h-8 w-8 object-contain" />
+                    <span className="font-display font-bold text-foreground">CampusConnect</span>
+                  </div>
+                  <h2 className="font-display text-3xl font-extrabold tracking-tight text-foreground">Welcome Back</h2>
+                  <p className="text-xs text-muted-foreground">Sign in to manage your tickets, registrations, and certificates.</p>
+                </div>
 
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => window.location.href = "/admin"}
-            className="mt-2.5 h-11 w-full rounded-full font-bold text-primary hover:bg-primary/10 border border-dashed border-primary/40 cursor-pointer"
-          >
-            ⚡ Bypass Sign-in & Open Admin Portal
-          </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleGoogle}
+                  disabled={busy}
+                  className="h-11 w-full rounded-full font-semibold border-border hover:bg-muted/80 cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <GoogleIcon className="h-4 w-4" /> Continue with Google
+                </Button>
 
-          <div className="my-6 flex items-center gap-3">
-            <div className="h-px flex-1 bg-border" />
-            <span className="text-xs uppercase tracking-wider text-muted-foreground">or</span>
-            <div className="h-px flex-1 bg-border" />
-          </div>
+                <div className="flex items-center gap-3">
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">or email passwordless</span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
 
-          <form onSubmit={handleEmail} className="space-y-3">
-            {mode === "signup" && (
-              <div>
-                <Label htmlFor="name">Full name</Label>
-                <Input
-                  id="name"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="mt-1.5 rounded-xl"
-                  required
-                />
-              </div>
+                <form onSubmit={handleSendOtp} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="email">College Email Address</Label>
+                    <div className="relative">
+                      <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/80" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="you@college.edu"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="rounded-xl pl-10 h-11 border-border/80"
+                        required
+                        disabled={busy}
+                      />
+                    </div>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={busy || !email}
+                    className="w-full rounded-full bg-gradient-brand text-white h-11 font-semibold shadow-glow hover:opacity-90 cursor-pointer"
+                  >
+                    {busy ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending Code...
+                      </>
+                    ) : (
+                      <>
+                        Send Security OTP <ArrowRight className="ml-1.5 h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                </form>
+
+                <div className="text-center pt-2">
+                  <span className="text-[11px] text-muted-foreground">
+                    Need help? <a href="mailto:support@campusconnect.edu" className="font-semibold text-primary hover:underline">Contact Support</a>
+                  </span>
+                </div>
+              </motion.div>
             )}
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <div className="relative mt-1.5">
-                <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="rounded-xl pl-9"
-                  required
-                />
-              </div>
-            </div>
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1.5 rounded-xl"
-                minLength={6}
-                required
-              />
-            </div>
 
-            <Button
-              type="submit"
-              disabled={busy}
-              className="mt-2 h-11 w-full rounded-full bg-gradient-brand font-semibold text-white shadow-glow hover:opacity-90"
-            >
-              {busy ? "Please wait..." : mode === "signin" ? "Sign in" : "Create account"}
-              <ArrowRight className="ml-1.5 h-4 w-4" />
-            </Button>
-          </form>
+            {step === "otp" && (
+              <motion.div
+                key="otp-step"
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+                className="space-y-6 text-center"
+              >
+                <div className="text-left">
+                  <button
+                    onClick={() => setStep("email")}
+                    className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground font-semibold mb-4"
+                  >
+                    <ArrowLeft className="h-3 w-3" /> Back to Email
+                  </button>
+                  <h2 className="font-display text-2xl font-extrabold tracking-tight text-foreground">Verify Your Identity</h2>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    We've emailed a 6-digit one-time password to <span className="font-semibold text-foreground">{email}</span>.
+                  </p>
+                </div>
 
-          <p className="mt-6 text-center text-sm text-muted-foreground">
-            {mode === "signin" ? "New to CampusConnect?" : "Already have an account?"}{" "}
-            <button
-              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
-              className="font-semibold text-primary hover:underline"
-            >
-              {mode === "signin" ? "Create an account" : "Sign in"}
-            </button>
-          </p>
+                <form onSubmit={handleVerifyOtp} className="space-y-6">
+                  <div className="flex flex-col items-center gap-2">
+                    <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider self-start">One-Time Password</Label>
+                    <InputOTP
+                      maxLength={6}
+                      value={otpCode}
+                      onChange={setOtpCode}
+                      disabled={busy}
+                      autoFocus
+                    >
+                      <InputOTPGroup className="gap-2">
+                        {Array.from({ length: 6 }).map((_, idx) => (
+                          <InputOTPSlot
+                            key={idx}
+                            index={idx}
+                            className="rounded-xl border border-border/80 bg-background/50 h-12 w-12 text-lg font-bold text-center"
+                          />
+                        ))}
+                      </InputOTPGroup>
+                    </InputOTP>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={busy || otpCode.length !== 6}
+                    className="w-full rounded-full bg-gradient-brand text-white h-11 font-semibold shadow-glow cursor-pointer"
+                  >
+                    {busy ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying Code...
+                      </>
+                    ) : (
+                      "Confirm & Sign In"
+                    )}
+                  </Button>
+                </form>
+
+                <div className="flex flex-col items-center gap-2 pt-2">
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSendOtp()}
+                    disabled={busy || timer > 0}
+                    className="text-xs font-semibold hover:bg-transparent text-primary hover:underline cursor-pointer"
+                  >
+                    {timer > 0 ? `Resend OTP in ${timer}s` : "Resend Verification Code"}
+                  </Button>
+                  <span className="text-[10px] text-muted-foreground">
+                    By continuing, you agree to our <a href="/terms" className="underline">Terms</a> & <a href="/privacy" className="underline">Privacy Policy</a>
+                  </span>
+                </div>
+              </motion.div>
+            )}
+
+            {step === "success" && (
+              <motion.div
+                key="success-step"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex flex-col items-center justify-center py-10 text-center space-y-4"
+              >
+                <div className="grid h-16 w-16 place-items-center rounded-full bg-success/15 text-success animate-bounce">
+                  <CheckCircle2 className="h-9 w-9" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="font-display text-xl font-bold text-foreground">Verified Successfully</h3>
+                  <p className="text-xs text-muted-foreground">Taking you to your secure dashboard...</p>
+                </div>
+              </motion.div>
+            )}
+
+          </AnimatePresence>
         </div>
       </div>
     </div>

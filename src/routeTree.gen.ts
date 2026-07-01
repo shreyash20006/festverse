@@ -28,6 +28,8 @@ import { Route as AuthenticatedMyTicketsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated.admin.index'
 import { Route as AuthenticatedTicketsIdRouteImport } from './routes/_authenticated.tickets.$id'
+import { Route as AuthenticatedAuthMfaVerifyRouteImport } from './routes/_authenticated.auth.mfa-verify'
+import { Route as AuthenticatedAuthMfaEnrollRouteImport } from './routes/_authenticated.auth.mfa-enroll'
 import { Route as AuthenticatedAdminVolunteersRouteImport } from './routes/_authenticated.admin.volunteers'
 import { Route as AuthenticatedAdminSupportRouteImport } from './routes/_authenticated.admin.support'
 import { Route as AuthenticatedAdminStudentsRouteImport } from './routes/_authenticated.admin.students'
@@ -42,6 +44,7 @@ import { Route as AuthenticatedAdminCertificatesRouteImport } from './routes/_au
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated.admin.audit'
 import { Route as AuthenticatedAdminAnalyticsRouteImport } from './routes/_authenticated.admin.analytics'
 import { Route as ApiPublicPaymentsWebhookRouteImport } from './routes/api/public/payments/webhook'
+import { Route as AuthenticatedAdminSettingsPaymentsRouteImport } from './routes/_authenticated.admin.settings.payments'
 import { Route as AuthenticatedAdminEventsNewRouteImport } from './routes/_authenticated.admin.events.new'
 import { Route as AuthenticatedAdminEventsIdEditRouteImport } from './routes/_authenticated.admin.events.$id.edit'
 
@@ -139,6 +142,18 @@ const AuthenticatedTicketsIdRoute = AuthenticatedTicketsIdRouteImport.update({
   path: '/tickets/$id',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedAuthMfaVerifyRoute =
+  AuthenticatedAuthMfaVerifyRouteImport.update({
+    id: '/auth/mfa-verify',
+    path: '/auth/mfa-verify',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedAuthMfaEnrollRoute =
+  AuthenticatedAuthMfaEnrollRouteImport.update({
+    id: '/auth/mfa-enroll',
+    path: '/auth/mfa-enroll',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAdminVolunteersRoute =
   AuthenticatedAdminVolunteersRouteImport.update({
     id: '/volunteers',
@@ -222,6 +237,12 @@ const ApiPublicPaymentsWebhookRoute =
     path: '/api/public/payments/webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
+const AuthenticatedAdminSettingsPaymentsRoute =
+  AuthenticatedAdminSettingsPaymentsRouteImport.update({
+    id: '/payments',
+    path: '/payments',
+    getParentRoute: () => AuthenticatedAdminSettingsRoute,
+  } as any)
 const AuthenticatedAdminEventsNewRoute =
   AuthenticatedAdminEventsNewRouteImport.update({
     id: '/new',
@@ -261,13 +282,16 @@ export interface FileRoutesByFullPath {
   '/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/scanner': typeof AuthenticatedAdminScannerRoute
-  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRouteWithChildren
   '/admin/students': typeof AuthenticatedAdminStudentsRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/volunteers': typeof AuthenticatedAdminVolunteersRoute
+  '/auth/mfa-enroll': typeof AuthenticatedAuthMfaEnrollRoute
+  '/auth/mfa-verify': typeof AuthenticatedAuthMfaVerifyRoute
   '/tickets/$id': typeof AuthenticatedTicketsIdRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/admin/events/new': typeof AuthenticatedAdminEventsNewRoute
+  '/admin/settings/payments': typeof AuthenticatedAdminSettingsPaymentsRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/admin/events/$id/edit': typeof AuthenticatedAdminEventsIdEditRoute
 }
@@ -296,13 +320,16 @@ export interface FileRoutesByTo {
   '/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
   '/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/admin/scanner': typeof AuthenticatedAdminScannerRoute
-  '/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/admin/settings': typeof AuthenticatedAdminSettingsRouteWithChildren
   '/admin/students': typeof AuthenticatedAdminStudentsRoute
   '/admin/support': typeof AuthenticatedAdminSupportRoute
   '/admin/volunteers': typeof AuthenticatedAdminVolunteersRoute
+  '/auth/mfa-enroll': typeof AuthenticatedAuthMfaEnrollRoute
+  '/auth/mfa-verify': typeof AuthenticatedAuthMfaVerifyRoute
   '/tickets/$id': typeof AuthenticatedTicketsIdRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/admin/events/new': typeof AuthenticatedAdminEventsNewRoute
+  '/admin/settings/payments': typeof AuthenticatedAdminSettingsPaymentsRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/admin/events/$id/edit': typeof AuthenticatedAdminEventsIdEditRoute
 }
@@ -334,13 +361,16 @@ export interface FileRoutesById {
   '/_authenticated/admin/registrations': typeof AuthenticatedAdminRegistrationsRoute
   '/_authenticated/admin/reports': typeof AuthenticatedAdminReportsRoute
   '/_authenticated/admin/scanner': typeof AuthenticatedAdminScannerRoute
-  '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
+  '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRouteWithChildren
   '/_authenticated/admin/students': typeof AuthenticatedAdminStudentsRoute
   '/_authenticated/admin/support': typeof AuthenticatedAdminSupportRoute
   '/_authenticated/admin/volunteers': typeof AuthenticatedAdminVolunteersRoute
+  '/_authenticated/auth/mfa-enroll': typeof AuthenticatedAuthMfaEnrollRoute
+  '/_authenticated/auth/mfa-verify': typeof AuthenticatedAuthMfaVerifyRoute
   '/_authenticated/tickets/$id': typeof AuthenticatedTicketsIdRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/admin/events/new': typeof AuthenticatedAdminEventsNewRoute
+  '/_authenticated/admin/settings/payments': typeof AuthenticatedAdminSettingsPaymentsRoute
   '/api/public/payments/webhook': typeof ApiPublicPaymentsWebhookRoute
   '/_authenticated/admin/events/$id/edit': typeof AuthenticatedAdminEventsIdEditRoute
 }
@@ -376,9 +406,12 @@ export interface FileRouteTypes {
     | '/admin/students'
     | '/admin/support'
     | '/admin/volunteers'
+    | '/auth/mfa-enroll'
+    | '/auth/mfa-verify'
     | '/tickets/$id'
     | '/admin/'
     | '/admin/events/new'
+    | '/admin/settings/payments'
     | '/api/public/payments/webhook'
     | '/admin/events/$id/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -411,9 +444,12 @@ export interface FileRouteTypes {
     | '/admin/students'
     | '/admin/support'
     | '/admin/volunteers'
+    | '/auth/mfa-enroll'
+    | '/auth/mfa-verify'
     | '/tickets/$id'
     | '/admin'
     | '/admin/events/new'
+    | '/admin/settings/payments'
     | '/api/public/payments/webhook'
     | '/admin/events/$id/edit'
   id:
@@ -448,9 +484,12 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/students'
     | '/_authenticated/admin/support'
     | '/_authenticated/admin/volunteers'
+    | '/_authenticated/auth/mfa-enroll'
+    | '/_authenticated/auth/mfa-verify'
     | '/_authenticated/tickets/$id'
     | '/_authenticated/admin/'
     | '/_authenticated/admin/events/new'
+    | '/_authenticated/admin/settings/payments'
     | '/api/public/payments/webhook'
     | '/_authenticated/admin/events/$id/edit'
   fileRoutesById: FileRoutesById
@@ -605,6 +644,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedTicketsIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/auth/mfa-verify': {
+      id: '/_authenticated/auth/mfa-verify'
+      path: '/auth/mfa-verify'
+      fullPath: '/auth/mfa-verify'
+      preLoaderRoute: typeof AuthenticatedAuthMfaVerifyRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/auth/mfa-enroll': {
+      id: '/_authenticated/auth/mfa-enroll'
+      path: '/auth/mfa-enroll'
+      fullPath: '/auth/mfa-enroll'
+      preLoaderRoute: typeof AuthenticatedAuthMfaEnrollRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admin/volunteers': {
       id: '/_authenticated/admin/volunteers'
       path: '/volunteers'
@@ -703,6 +756,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPaymentsWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/admin/settings/payments': {
+      id: '/_authenticated/admin/settings/payments'
+      path: '/payments'
+      fullPath: '/admin/settings/payments'
+      preLoaderRoute: typeof AuthenticatedAdminSettingsPaymentsRouteImport
+      parentRoute: typeof AuthenticatedAdminSettingsRoute
+    }
     '/_authenticated/admin/events/new': {
       id: '/_authenticated/admin/events/new'
       path: '/new'
@@ -736,6 +796,21 @@ const AuthenticatedAdminEventsRouteWithChildren =
     AuthenticatedAdminEventsRouteChildren,
   )
 
+interface AuthenticatedAdminSettingsRouteChildren {
+  AuthenticatedAdminSettingsPaymentsRoute: typeof AuthenticatedAdminSettingsPaymentsRoute
+}
+
+const AuthenticatedAdminSettingsRouteChildren: AuthenticatedAdminSettingsRouteChildren =
+  {
+    AuthenticatedAdminSettingsPaymentsRoute:
+      AuthenticatedAdminSettingsPaymentsRoute,
+  }
+
+const AuthenticatedAdminSettingsRouteWithChildren =
+  AuthenticatedAdminSettingsRoute._addFileChildren(
+    AuthenticatedAdminSettingsRouteChildren,
+  )
+
 interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminAnalyticsRoute: typeof AuthenticatedAdminAnalyticsRoute
   AuthenticatedAdminAuditRoute: typeof AuthenticatedAdminAuditRoute
@@ -746,7 +821,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminRegistrationsRoute: typeof AuthenticatedAdminRegistrationsRoute
   AuthenticatedAdminReportsRoute: typeof AuthenticatedAdminReportsRoute
   AuthenticatedAdminScannerRoute: typeof AuthenticatedAdminScannerRoute
-  AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
+  AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRouteWithChildren
   AuthenticatedAdminStudentsRoute: typeof AuthenticatedAdminStudentsRoute
   AuthenticatedAdminSupportRoute: typeof AuthenticatedAdminSupportRoute
   AuthenticatedAdminVolunteersRoute: typeof AuthenticatedAdminVolunteersRoute
@@ -763,7 +838,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminRegistrationsRoute: AuthenticatedAdminRegistrationsRoute,
   AuthenticatedAdminReportsRoute: AuthenticatedAdminReportsRoute,
   AuthenticatedAdminScannerRoute: AuthenticatedAdminScannerRoute,
-  AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
+  AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRouteWithChildren,
   AuthenticatedAdminStudentsRoute: AuthenticatedAdminStudentsRoute,
   AuthenticatedAdminSupportRoute: AuthenticatedAdminSupportRoute,
   AuthenticatedAdminVolunteersRoute: AuthenticatedAdminVolunteersRoute,
@@ -780,6 +855,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedStudentRoute: typeof AuthenticatedStudentRoute
   AuthenticatedSuperAdminRoute: typeof AuthenticatedSuperAdminRoute
   AuthenticatedVerifyPrnRoute: typeof AuthenticatedVerifyPrnRoute
+  AuthenticatedAuthMfaEnrollRoute: typeof AuthenticatedAuthMfaEnrollRoute
+  AuthenticatedAuthMfaVerifyRoute: typeof AuthenticatedAuthMfaVerifyRoute
   AuthenticatedTicketsIdRoute: typeof AuthenticatedTicketsIdRoute
 }
 
@@ -790,6 +867,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedStudentRoute: AuthenticatedStudentRoute,
   AuthenticatedSuperAdminRoute: AuthenticatedSuperAdminRoute,
   AuthenticatedVerifyPrnRoute: AuthenticatedVerifyPrnRoute,
+  AuthenticatedAuthMfaEnrollRoute: AuthenticatedAuthMfaEnrollRoute,
+  AuthenticatedAuthMfaVerifyRoute: AuthenticatedAuthMfaVerifyRoute,
   AuthenticatedTicketsIdRoute: AuthenticatedTicketsIdRoute,
 }
 

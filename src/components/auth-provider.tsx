@@ -2,6 +2,8 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
+import { SessionMonitor } from "@/components/auth/session-monitor";
+
 interface Profile {
   id: string;
   full_name: string | null;
@@ -103,8 +105,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
+      <SessionMonitor />
     </Ctx.Provider>
   );
 }
 
 export const useAuth = () => useContext(Ctx);
+

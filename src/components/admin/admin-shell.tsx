@@ -53,7 +53,8 @@ const NAV = [
   { to: "/admin/volunteers", label: "Volunteers", icon: HandHelping },
   { to: "/admin/reports", label: "Reports", icon: FileBarChart },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
-  { to: "/admin/settings", label: "Settings", icon: Settings },
+  { to: "/admin/settings", label: "Settings", icon: Settings, exact: true },
+  { to: "/admin/settings/payments", label: "Payment Settings", icon: Settings },
   { to: "/admin/support", label: "Support", icon: LifeBuoy },
   { to: "/admin/audit", label: "Audit Logs", icon: ScrollText },
 ];
@@ -85,7 +86,7 @@ function SidebarNav({ collapsed, onItemClick }: { collapsed?: boolean; onItemCli
       return it.to === "/admin/scanner";
     }
     if (roles.includes("organizer") && !roles.includes("college_admin") && !roles.includes("super_admin")) {
-      return it.to !== "/admin/settings" && it.to !== "/admin/audit" && it.to !== "/admin/volunteers";
+      return it.to !== "/admin/settings" && it.to !== "/admin/settings/payments" && it.to !== "/admin/audit" && it.to !== "/admin/volunteers";
     }
     return true;
   });

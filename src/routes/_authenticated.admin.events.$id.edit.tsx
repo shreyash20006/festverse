@@ -56,11 +56,20 @@ function EditEventPage() {
     end_at: "",
     registration_closes_at: "",
     capacity: "",
-    is_paid: false,
-    price_inr: "0",
     featured: false,
     status: "draft" as any,
     organizer_name: "",
+    // Advanced pricing configuration
+    registration_type: "free" as "free" | "paid",
+    registration_fee: "0",
+    early_bird_price: "",
+    early_bird_deadline: "",
+    late_registration_price: "",
+    gst_percent: "0",
+    discount_amount: "0",
+    coupon_code: "",
+    max_registrations: "",
+    registration_deadline: "",
   });
 
   useEffect(() => {
@@ -77,11 +86,20 @@ function EditEventPage() {
       end_at: toLocal(ev.end_at),
       registration_closes_at: toLocal(ev.registration_closes_at),
       capacity: ev.capacity != null ? String(ev.capacity) : "",
-      is_paid: !!ev.is_paid,
-      price_inr: ev.price_inr != null ? String(ev.price_inr) : "0",
       featured: !!ev.featured,
       status: ev.status ?? "draft",
       organizer_name: ev.organizer_name ?? "",
+      // Advanced pricing
+      registration_type: (ev.registration_type as any) ?? (ev.is_paid ? "paid" : "free"),
+      registration_fee: ev.registration_fee != null ? String(ev.registration_fee) : "0",
+      early_bird_price: ev.early_bird_price != null ? String(ev.early_bird_price) : "",
+      early_bird_deadline: ev.early_bird_deadline ? toLocal(ev.early_bird_deadline) : "",
+      late_registration_price: ev.late_registration_price != null ? String(ev.late_registration_price) : "",
+      gst_percent: ev.gst_percent != null ? String(ev.gst_percent) : "0",
+      discount_amount: ev.discount_amount != null ? String(ev.discount_amount) : "0",
+      coupon_code: ev.coupon_code ?? "",
+      max_registrations: ev.max_registrations != null ? String(ev.max_registrations) : "",
+      registration_deadline: ev.registration_deadline ? toLocal(ev.registration_deadline) : "",
     });
   }, [ev]);
 
@@ -93,13 +111,26 @@ function EditEventPage() {
     try {
       const payload = {
         ...form,
+        slug: form.slug,
         start_at: new Date(form.start_at).toISOString(),
         end_at: new Date(form.end_at || form.start_at).toISOString(),
         registration_closes_at: form.registration_closes_at
           ? new Date(form.registration_closes_at).toISOString()
           : undefined,
         capacity: form.capacity ? Number(form.capacity) : undefined,
-        price_inr: Number(form.price_inr) || 0,
+        // Legacy compatibility
+        is_paid: form.registration_type === "paid",
+        price_inr: form.registration_type === "paid" ? Number(form.registration_fee) : 0,
+        // Advanced pricing details
+        registration_fee: Number(form.registration_fee) || 0,
+        early_bird_price: form.early_bird_price ? Number(form.early_bird_price) : null,
+        early_bird_deadline: form.early_bird_deadline ? new Date(form.early_bird_deadline).toISOString() : null,
+        late_registration_price: form.late_registration_price ? Number(form.late_registration_price) : null,
+        gst_percent: Number(form.gst_percent) || 0,
+        discount_amount: Number(form.discount_amount) || 0,
+        coupon_code: form.coupon_code || null,
+        max_registrations: form.max_registrations ? Number(form.max_registrations) : null,
+        registration_deadline: form.registration_deadline ? new Date(form.registration_deadline).toISOString() : null,
       };
       await save({ data: { id, event: payload } });
       toast.success("Event updated");
@@ -221,20 +252,114 @@ function EditEventPage() {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-6 rounded-2xl border border-border bg-background p-4">
-          <div className="flex items-center gap-3">
-            <Switch checked={form.is_paid} onCheckedChange={(v) => set("is_paid", v)} />
-            <Label className="cursor-pointer">Paid event</Label>
-          </div>
-          {form.is_paid && (
+        {/* Registration Pricing Configuration */}
+        <div className="space-y-4 rounded-2xl border border-border bg-background p-5">
+          <h3 className="font-display font-semibold text-sm">Event Registration Pricing</h3>
+          
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <Label>Price (₹)</Label>
-              <Input type="number" min="0" step="1" value={form.price_inr} onChange={(e) => set("price_inr", e.target.value)} className="mt-1.5 w-32 rounded-xl" />
+              <Label>Registration Type</Label>
+              <Select value={form.registration_type} onValueChange={(v) => set("registration_type", v as any)}>
+                <SelectTrigger className="mt-1.5 rounded-xl"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="free">Free Registration</SelectItem>
+                  <SelectItem value="paid">Paid Registration</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {form.registration_type === "paid" && (
+              <div>
+                <Label>Base Registration Fee (₹)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={form.registration_fee}
+                  onChange={(e) => set("registration_fee", e.target.value)}
+                  className="mt-1.5 rounded-xl"
+                  required
+                />
+              </div>
+            )}
+          </div>
+
+          {form.registration_type === "paid" && (
+            <div className="grid gap-4 sm:grid-cols-2 border-t border-border/50 pt-4 mt-2">
+              <div>
+                <Label>GST Percent (%)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.1"
+                  value={form.gst_percent}
+                  onChange={(e) => set("gst_percent", e.target.value)}
+                  className="mt-1.5 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <Label>Max Registrations Limit</Label>
+                <Input
+                  type="number"
+                  min="1"
+                  value={form.max_registrations}
+                  onChange={(e) => set("max_registrations", e.target.value)}
+                  placeholder="Unlimited"
+                  className="mt-1.5 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <Label>Early Bird Price (₹)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={form.early_bird_price}
+                  onChange={(e) => set("early_bird_price", e.target.value)}
+                  placeholder="Optional"
+                  className="mt-1.5 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <Label>Early Bird Deadline</Label>
+                <Input
+                  type="datetime-local"
+                  value={form.early_bird_deadline}
+                  onChange={(e) => set("early_bird_deadline", e.target.value)}
+                  className="mt-1.5 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <Label>Late Registration Price (₹)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={form.late_registration_price}
+                  onChange={(e) => set("late_registration_price", e.target.value)}
+                  placeholder="Optional"
+                  className="mt-1.5 rounded-xl"
+                />
+              </div>
+
+              <div>
+                <Label>Specific Pricing Deadline</Label>
+                <Input
+                  type="datetime-local"
+                  value={form.registration_deadline}
+                  onChange={(e) => set("registration_deadline", e.target.value)}
+                  className="mt-1.5 rounded-xl"
+                />
+              </div>
             </div>
           )}
-          <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-3 border-t border-border/50 pt-4 mt-2">
             <Switch checked={form.featured} onCheckedChange={(v) => set("featured", v)} />
-            <Label className="cursor-pointer">Featured on home</Label>
+            <Label className="cursor-pointer">Featured on home page</Label>
           </div>
         </div>
 

@@ -73,6 +73,17 @@ const EventSchema = z.object({
   status: z.enum(["draft", "published", "cancelled", "completed"]).default("draft"),
   featured: z.boolean().default(false),
   organizer_name: z.string().max(120).optional(),
+  // Advanced pricing details
+  registration_type: z.enum(["free", "paid"]).default("free"),
+  registration_fee: z.coerce.number().nonnegative().default(0),
+  early_bird_price: z.coerce.number().nonnegative().optional().nullable(),
+  early_bird_deadline: z.string().optional().nullable(),
+  late_registration_price: z.coerce.number().nonnegative().optional().nullable(),
+  gst_percent: z.coerce.number().nonnegative().default(0),
+  discount_amount: z.coerce.number().nonnegative().default(0),
+  coupon_code: z.string().optional().nullable(),
+  max_registrations: z.coerce.number().int().positive().optional().nullable(),
+  registration_deadline: z.string().optional().nullable(),
 });
 
 export const createOrUpdateEvent = createServerFn({ method: "POST" })
@@ -88,23 +99,64 @@ export const createOrUpdateEvent = createServerFn({ method: "POST" })
     if (!collegeId) throw new Error("No associated college found for your account.");
 
     const row = {
-      ...data.event,
+      title: data.event.title,
+      slug: data.event.slug,
+      short_description: data.event.short_description || null,
+      description: data.event.description || null,
+      category: data.event.category,
+      banner_url: data.event.banner_url || null,
+      venue: data.event.venue || null,
+      start_at: data.event.start_at,
+      end_at: data.event.end_at,
+      registration_closes_at: data.event.registration_closes_at || null,
+      capacity: data.event.capacity || null,
+      // Sync legacy price fields
+      price_inr: data.event.registration_type === "paid" ? data.event.registration_fee : 0,
+      is_paid: data.event.registration_type === "paid",
+      status: data.event.status,
+      featured: data.event.featured,
+      organizer_name: data.event.organizer_name || null,
       college_id: collegeId,
       created_by: context.userId,
-      banner_url: data.event.banner_url || null,
     };
+
+    let evId = data.id;
     if (data.id) {
       const { error } = await context.supabase.from("events").update(row).eq("id", data.id);
       if (error) throw new Error(error.message);
-      return { id: data.id };
+    } else {
+      const { data: ev, error } = await context.supabase
+        .from("events")
+        .insert(row)
+        .select("id")
+        .single();
+      if (error) throw new Error(error.message);
+      evId = ev.id;
     }
-    const { data: ev, error } = await context.supabase
-      .from("events")
-      .insert(row)
-      .select("id")
-      .single();
-    if (error) throw new Error(error.message);
-    return { id: ev.id };
+
+    // Save advanced pricing details
+    const pricingRow = {
+      event_id: evId,
+      registration_type: data.event.registration_type,
+      registration_fee: data.event.registration_fee,
+      currency: "INR",
+      early_bird_price: data.event.early_bird_price || null,
+      early_bird_deadline: data.event.early_bird_deadline || null,
+      late_registration_price: data.event.late_registration_price || null,
+      gst_percent: data.event.gst_percent || 0,
+      discount_amount: data.event.discount_amount || 0,
+      coupon_code: data.event.coupon_code || null,
+      max_registrations: data.event.max_registrations || null,
+      registration_deadline: data.event.registration_deadline || null,
+    };
+
+    const { error: pricingErr } = await context.supabase
+      .from("event_pricing")
+      .upsert(pricingRow, { onConflict: "event_id" });
+    
+    if (pricingErr) throw new Error("Pricing details failed to save: " + pricingErr.message);
+
+    return { id: evId };
   });
 
 export const deleteEvent = createServerFn({ method: "POST" })
@@ -124,7 +176,27 @@ export const getEventForEdit = createServerFn({ method: "GET" })
     await assertAdmin(context.supabase, context.userId);
     const { data: ev, error } = await context.supabase.from("events").select("*").eq("id", data.id).single();
     if (error) throw new Error(error.message);
-    return ev;
+
+    // Fetch matching pricing row
+    const { data: pricing } = await context.supabase
+      .from("event_pricing")
+      .select("*")
+      .eq("event_id", data.id)
+      .maybeSingle();
+
+    return {
+      ...ev,
+      registration_type: pricing?.registration_type ?? (ev.is_paid ? "paid" : "free"),
+      registration_fee: pricing?.registration_fee ?? ev.price_inr ?? 0,
+      early_bird_price: pricing?.early_bird_price ?? null,
+      early_bird_deadline: pricing?.early_bird_deadline ?? null,
+      late_registration_price: pricing?.late_registration_price ?? null,
+      gst_percent: pricing?.gst_percent ?? 0,
+      discount_amount: pricing?.discount_amount ?? 0,
+      coupon_code: pricing?.coupon_code ?? null,
+      max_registrations: pricing?.max_registrations ?? null,
+      registration_deadline: pricing?.registration_deadline ?? null,
+    };
   });
 
 export const grantRole = createServerFn({ method: "POST" })
