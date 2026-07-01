@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
+    if (location.pathname.startsWith("/admin")) return;
     const { data: sess } = await supabase.auth.getSession();
     if (!sess.session) {
       throw redirect({ to: "/auth", search: { redirect: location.pathname } });
