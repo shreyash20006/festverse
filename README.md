@@ -78,5 +78,9 @@ CampusConnect is designed to scale from a single-college platform into a multi-c
 * **Branding**: Custom branding and subdomain/domain mappings for individual colleges.
 * **Payment Gateways**: College-specific checkout integrations.
 * **Inter-College Events**: Cross-campus discovery and registrations.
+* **Certificate QR Verification**: Publicly shareable certificate verification system via unique QR codes.
+* **Team/Group Registrations**: Structured flows for team registrations (e.g. for Hackathons, sports tournaments).
+* **Calendar Integration**: Direct calendar sync (Google/Apple) for registered events.
+* **LinkedIn & Social Sharing**: Integrated sharing templates for students to display achievements and participation on LinkedIn and Twitter.
 * **Advanced Modules**: Sponsor management, alumni networks, volunteer portals, and native mobile apps.
 * **AI Insights**: AI-powered event analytics and scheduling recommendations.
