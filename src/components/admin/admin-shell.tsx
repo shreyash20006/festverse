@@ -48,14 +48,14 @@ const NAV = [
   { to: "/admin/scanner", label: "QR Check-in", icon: QrCode },
   { to: "/admin/students", label: "Students", icon: GraduationCap },
   { to: "/admin/payments", label: "Payments", icon: CreditCard },
-  { to: "/admin/certificates", label: "Certificates", icon: Award, soon: true },
-  { to: "/admin/notices", label: "Notices", icon: Megaphone, soon: true },
-  { to: "/admin/volunteers", label: "Volunteers", icon: HandHelping, soon: true },
-  { to: "/admin/reports", label: "Reports", icon: FileBarChart, soon: true },
+  { to: "/admin/certificates", label: "Certificates", icon: Award },
+  { to: "/admin/notices", label: "Notices", icon: Megaphone },
+  { to: "/admin/volunteers", label: "Volunteers", icon: HandHelping },
+  { to: "/admin/reports", label: "Reports", icon: FileBarChart },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/admin/settings", label: "Settings", icon: Settings },
-  { to: "/admin/support", label: "Support", icon: LifeBuoy, soon: true },
-  { to: "/admin/audit", label: "Audit Logs", icon: ScrollText, soon: true },
+  { to: "/admin/support", label: "Support", icon: LifeBuoy },
+  { to: "/admin/audit", label: "Audit Logs", icon: ScrollText },
 ];
 
 function useTheme() {
