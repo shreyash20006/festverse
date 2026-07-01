@@ -80,56 +80,85 @@ function ScannerPage() {
       <p className="mt-1 text-sm text-muted-foreground">Scan attendee QR codes to mark attendance.</p>
 
       <div className="mt-6 overflow-hidden rounded-3xl border border-border bg-card shadow-elevated">
-        <div className="relative aspect-square bg-black">
+        <div className="relative aspect-square bg-black overflow-hidden">
           <div id="scanner-region" className="h-full w-full" />
+          {scanning && (
+            <div className="absolute inset-0 pointer-events-none z-10 flex flex-col justify-between p-8">
+              {/* Corner Targets */}
+              <div className="absolute top-8 left-8 w-8 h-8 border-t-4 border-l-4 border-primary rounded-tl-lg shadow-[0_0_10px_var(--color-primary)]" />
+              <div className="absolute top-8 right-8 w-8 h-8 border-t-4 border-r-4 border-primary rounded-tr-lg shadow-[0_0_10px_var(--color-primary)]" />
+              <div className="absolute bottom-8 left-8 w-8 h-8 border-b-4 border-l-4 border-primary rounded-bl-lg shadow-[0_0_10px_var(--color-primary)]" />
+              <div className="absolute bottom-8 right-8 w-8 h-8 border-b-4 border-r-4 border-primary rounded-br-lg shadow-[0_0_10px_var(--color-primary)]" />
+              
+              {/* Laser Scanning Line */}
+              <div className="absolute inset-x-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent shadow-[0_0_15px_var(--color-primary)] animate-scan" />
+            </div>
+          )}
           {!scanning && (
-            <div className="absolute inset-0 grid place-items-center bg-black text-white/70">
+            <div className="absolute inset-0 grid place-items-center bg-black/90 text-white/70 z-10 backdrop-blur-[2px]">
               <div className="text-center">
-                <CameraOff className="mx-auto h-12 w-12 opacity-60" />
-                <p className="mt-3 text-sm">Camera off</p>
+                <div className="grid h-16 w-16 place-items-center rounded-2xl bg-white/5 mx-auto border border-white/10">
+                  <CameraOff className="h-8 w-8 opacity-60" />
+                </div>
+                <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-white/65">Camera offline</p>
+                <p className="text-[10px] text-white/45 mt-1">Start scanning to enable check-in</p>
               </div>
             </div>
           )}
         </div>
-        <div className="flex items-center justify-between gap-3 p-4">
+        <div className="flex items-center justify-between gap-3 p-4 bg-muted/20 border-t border-border/60">
           {scanning ? (
-            <Button onClick={stop} variant="outline" className="rounded-full">
-              <CameraOff className="mr-2 h-4 w-4" /> Stop
+            <Button onClick={stop} variant="outline" className="rounded-full shadow-sm hover:bg-destructive/10 hover:text-destructive border-border/80 cursor-pointer active:scale-95">
+              <CameraOff className="mr-2 h-4 w-4" /> Stop Scanner
             </Button>
           ) : (
-            <Button onClick={start} className="rounded-full bg-gradient-brand text-white shadow-glow">
+            <Button onClick={start} className="rounded-full bg-gradient-brand text-white shadow-glow hover:shadow-glow-primary cursor-pointer active:scale-95">
               <Camera className="mr-2 h-4 w-4" /> Start scanning
             </Button>
           )}
-          <p className="text-xs text-muted-foreground">Allow camera access when prompted.</p>
+          <p className="text-xs text-muted-foreground">Camera access is required for scanning.</p>
         </div>
       </div>
 
       {last && (
         <div
-          className={`mt-6 rounded-3xl border p-6 shadow-card ${
+          className={`mt-6 rounded-3xl border p-6 shadow-elevated transition-all duration-300 animate-in fade-in-50 slide-in-from-bottom-5 ${
             last.ok
-              ? "border-success/40 bg-success/10"
+              ? "border-success/30 bg-success/5 text-success-foreground"
               : last.reason === "already_checked_in"
-              ? "border-warning/50 bg-warning/10"
-              : "border-destructive/40 bg-destructive/10"
+              ? "border-warning/35 bg-warning/5 text-warning-foreground"
+              : "border-destructive/30 bg-destructive/5 text-destructive-foreground"
           }`}
         >
-          <div className="flex items-start gap-3">
-            {last.ok ? (
-              <CheckCircle2 className="h-6 w-6 text-success" />
-            ) : last.reason === "already_checked_in" ? (
-              <AlertTriangle className="h-6 w-6 text-warning-foreground" />
-            ) : (
-              <XCircle className="h-6 w-6 text-destructive" />
-            )}
-            <div className="flex-1">
-              <div className="font-display text-lg font-semibold">{last.message}</div>
+          <div className="flex items-start gap-4">
+            <div className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${
+              last.ok
+                ? "bg-success/15 text-success"
+                : last.reason === "already_checked_in"
+                ? "bg-warning/20 text-warning"
+                : "bg-destructive/15 text-destructive"
+            }`}>
+              {last.ok ? (
+                <CheckCircle2 className="h-6 w-6" />
+              ) : last.reason === "already_checked_in" ? (
+                <AlertTriangle className="h-6 w-6" />
+              ) : (
+                <XCircle className="h-6 w-6" />
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="font-display text-lg font-bold tracking-tight">{last.message}</div>
               {last.ticket && (
-                <div className="mt-2 text-sm">
-                  <div><b>{last.ticket.registrations?.full_name}</b> · {last.ticket.registrations?.prn}</div>
-                  <div className="text-muted-foreground">{last.ticket.events?.title}</div>
-                  <div className="mt-1 font-mono text-xs text-muted-foreground">{last.ticket.ticket_code}</div>
+                <div className="mt-3 grid gap-1.5 rounded-2xl bg-card border border-border/50 p-4 shadow-sm text-foreground">
+                  <div className="text-sm font-semibold">{last.ticket.registrations?.full_name}</div>
+                  <div className="text-xs font-mono text-muted-foreground tracking-wider uppercase">{last.ticket.registrations?.prn}</div>
+                  <div className="mt-1 border-t border-border/60 pt-2 text-xs">
+                    <span className="text-muted-foreground">Event: </span>
+                    <span className="font-medium text-foreground">{last.ticket.events?.title}</span>
+                  </div>
+                  <div className="text-[10px] font-mono text-muted-foreground/80 mt-0.5">
+                    Ticket Code: {last.ticket.ticket_code}
+                  </div>
                 </div>
               )}
             </div>
