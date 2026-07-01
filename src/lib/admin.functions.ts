@@ -31,6 +31,18 @@ async function assertAdmin(supabase: any, userId: string): Promise<string> {
   return roleRow.college_id;
 }
 
+async function assertSuperAdmin(supabase: any, userId: string): Promise<boolean> {
+  const { data: roleRow } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "super_admin")
+    .limit(1)
+    .maybeSingle();
+
+  return !!roleRow;
+}
+
 export const bulkUploadStudents = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { rows: Array<z.input<typeof StudentSchema>> }) => ({
@@ -251,20 +263,32 @@ export const createCollegeTenant = createServerFn({ method: "POST" })
     }).parse(input)
   )
   .handler(async ({ data, context }) => {
-    const { supabase, userId } = context;
+    // ✅ FIXED: Use admin client for unrestricted access to colleges table
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    
+    // Verify user is super_admin
+    const isSuperAdmin = await assertSuperAdmin(context.supabase, context.userId);
+    if (!isSuperAdmin) {
+      throw new Error("Only super_admin can create colleges");
+    }
 
-    // Check if slug is taken
-    const { data: existing } = await supabase
+    // Check if slug is taken using admin client
+    const { data: existing, error: checkErr } = await supabaseAdmin
       .from("colleges")
       .select("id")
       .eq("slug", data.slug)
       .maybeSingle();
+    
+    if (checkErr) {
+      throw new Error(`Failed to check college slug: ${checkErr.message}`);
+    }
+    
     if (existing) {
       throw new Error(`The college URL slug '${data.slug}' is already taken.`);
     }
 
-    // Insert college
-    const { data: college, error: colErr } = await supabase
+    // Insert college using admin client
+    const { data: college, error: colErr } = await supabaseAdmin
       .from("colleges")
       .insert({
         name: data.name,
@@ -278,19 +302,19 @@ export const createCollegeTenant = createServerFn({ method: "POST" })
       throw new Error(colErr?.message ?? "Failed to create college");
     }
 
-    // Map creator as college_admin for this college
-    const { error: roleErr } = await supabase
+    // Map creator as college_admin for this college using admin client
+    const { error: roleErr } = await supabaseAdmin
       .from("user_roles")
       .insert({
-        user_id: userId,
+        user_id: context.userId,
         role: "college_admin",
         college_id: college.id,
       });
 
     if (roleErr) {
       // Cleanup college on role fail
-      await supabase.from("colleges").delete().eq("id", college.id);
-      throw new Error(roleErr.message);
+      await supabaseAdmin.from("colleges").delete().eq("id", college.id);
+      throw new Error(`Failed to assign role: ${roleErr.message}`);
     }
 
     return { ok: true, collegeId: college.id, slug: data.slug };
