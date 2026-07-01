@@ -16,6 +16,7 @@ import { registerForFreeEvent } from "@/lib/registration.functions";
 import { preparePaidEventCheckout, verifyPaidEventCheckout } from "@/lib/payments-checkout.functions";
 import { useRazorpayCheckout } from "@/hooks/useRazorpayCheckout";
 import { toast } from "sonner";
+import { TeamRegistrationDialog } from "@/components/team-registration-dialog";
 
 export const Route = createFileRoute("/events/$slug")({
   loader: async ({ params }) => {
@@ -89,6 +90,7 @@ function EventDetailPage() {
   const [prn, setPrn] = useState("");
   const [phone, setPhone] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
 
   const { data: regCount = 0 } = useQuery({
     queryKey: ["event-reg-count", event.id],
@@ -282,6 +284,15 @@ function EventDetailPage() {
               )}
             </div>
 
+            {event.is_team_event && (
+              <div className="mt-3 rounded-2xl bg-muted/60 p-3 text-xs text-muted-foreground flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary shrink-0" />
+                <span>
+                  Team Event: <strong>{event.min_team_size}-{event.max_team_size} members</strong> required.
+                </span>
+              </div>
+            )}
+
             {existing ? (
               <div className="mt-6 rounded-2xl border border-success/30 bg-success/10 p-4 text-sm">
                 <div className="font-semibold text-success-foreground">You're registered ✓</div>
@@ -297,6 +308,37 @@ function EventDetailPage() {
             ) : closed ? (
               <div className="mt-6 rounded-2xl border border-border bg-muted p-4 text-center text-sm text-muted-foreground">
                 Registration is closed.
+              </div>
+            ) : event.is_team_event ? (
+              <div className="mt-6 space-y-3">
+                <Button
+                  onClick={() => {
+                    if (!user) {
+                      navigate({ to: "/auth", search: { redirect: `/events/${event.slug}` } });
+                      return;
+                    }
+                    setIsTeamDialogOpen(true);
+                  }}
+                  className="h-11 w-full rounded-full bg-gradient-brand text-base font-semibold text-white shadow-glow hover:opacity-90 cursor-pointer"
+                >
+                  Register as Team / Join Team
+                </Button>
+                <TeamRegistrationDialog
+                  eventId={event.id}
+                  eventTitle={event.title}
+                  minTeamSize={event.min_team_size}
+                  maxTeamSize={event.max_team_size}
+                  isOpen={isTeamDialogOpen}
+                  onOpenChange={setIsTeamDialogOpen}
+                  onSuccess={(ticketId) => {
+                    navigate({ to: "/tickets/$id", params: { id: ticketId } });
+                  }}
+                />
+                {!user && (
+                  <p className="text-center text-[11px] text-muted-foreground">
+                    You'll need to sign in to complete registration.
+                  </p>
+                )}
               </div>
             ) : (
               <form onSubmit={handleRegister} className="mt-6 space-y-3">

@@ -14,7 +14,7 @@ export const Route = createFileRoute("/_authenticated/tickets/$id")({
     const { data, error } = await supabase
       .from("tickets")
       .select(
-        "id, ticket_code, qr_token, status, checked_in_at, issued_at, events(id, title, banner_url, venue, start_at, end_at, category), registrations(full_name, prn, email)"
+        "id, ticket_code, qr_token, status, checked_in_at, issued_at, events(id, title, banner_url, venue, start_at, end_at, category), registrations(full_name, prn, email, teams(id, name, invite_code))"
       )
       .eq("id", params.id)
       .maybeSingle();
@@ -120,6 +120,27 @@ function TicketPage() {
                 <dd className="font-semibold capitalize">{ticket.status}</dd>
               </div>
             </dl>
+
+            {ticket.registrations?.teams && (
+              <div className="mt-4 border-t border-border pt-4">
+                <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Team details</h3>
+                <dl className="mt-2 grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <dt className="text-muted-foreground">Team Name</dt>
+                    <dd className="font-semibold text-primary">{ticket.registrations.teams.name}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-muted-foreground">Invite Code</dt>
+                    <dd className="font-mono font-semibold bg-muted px-2 py-0.5 rounded text-foreground inline-block">
+                      {ticket.registrations.teams.invite_code}
+                    </dd>
+                  </div>
+                </dl>
+                <p className="mt-1 text-[10px] text-muted-foreground">
+                  Share this invite code with teammates so they can join your team.
+                </p>
+              </div>
+            )}
 
             {qrUrl && (
               <Button asChild variant="outline" className="mt-5 w-full rounded-full">

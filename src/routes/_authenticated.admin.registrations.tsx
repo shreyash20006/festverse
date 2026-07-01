@@ -13,7 +13,7 @@ function RegistrationsPage() {
     queryFn: async () => {
       const { data } = await supabase
         .from("registrations")
-        .select("id, full_name, prn, email, phone, status, amount_paid, created_at, events(title, slug)")
+        .select("id, full_name, prn, email, phone, status, amount_paid, created_at, team_role, teams(id, name, invite_code), events(title, slug)")
         .order("created_at", { ascending: false })
         .limit(500);
       return data ?? [];
@@ -31,18 +31,31 @@ function RegistrationsPage() {
               <th className="px-4 py-3 font-semibold">Name</th>
               <th className="px-4 py-3 font-semibold">PRN</th>
               <th className="px-4 py-3 font-semibold">Event</th>
+              <th className="px-4 py-3 font-semibold">Team / Role</th>
               <th className="px-4 py-3 font-semibold">Status</th>
               <th className="px-4 py-3 font-semibold">Amount</th>
             </tr>
           </thead>
           <tbody>
             {regs.length === 0 ? (
-              <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">No registrations yet.</td></tr>
+              <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No registrations yet.</td></tr>
             ) : regs.map((r: any) => (
               <tr key={r.id} className="border-b border-border last:border-none hover:bg-muted/30">
                 <td className="px-4 py-2.5 font-medium">{r.full_name}</td>
                 <td className="px-4 py-2.5 font-mono text-muted-foreground">{r.prn}</td>
                 <td className="px-4 py-2.5">{r.events?.title}</td>
+                <td className="px-4 py-2.5">
+                  {r.teams?.name ? (
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-medium text-foreground">{r.teams.name}</span>
+                      <span className="text-[9px] uppercase font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded-full border border-border">
+                        {r.team_role}
+                      </span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground text-xs">Individual</span>
+                  )}
+                </td>
                 <td className="px-4 py-2.5 capitalize">{r.status.replace("_", " ")}</td>
                 <td className="px-4 py-2.5">{Number(r.amount_paid) > 0 ? `₹${r.amount_paid}` : "—"}</td>
               </tr>

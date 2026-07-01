@@ -22,7 +22,7 @@ function MyTicketsPage() {
       const { data, error } = await supabase
         .from("tickets")
         .select(
-          "id, ticket_code, status, checked_in_at, issued_at, events(id, slug, title, banner_url, venue, start_at, category)"
+          "id, ticket_code, status, checked_in_at, issued_at, events(id, slug, title, banner_url, venue, start_at, category), registrations(id, teams(id, name))"
         )
         .order("issued_at", { ascending: false });
       if (error) throw error;
@@ -72,7 +72,14 @@ function MyTicketsPage() {
                   )}
                 </div>
                 <div className="flex flex-1 flex-col gap-1.5 p-4">
-                  <CategoryBadge category={t.events?.category ?? "other"} />
+                  <div className="flex items-center justify-between">
+                    <CategoryBadge category={t.events?.category ?? "other"} />
+                    {t.registrations?.teams && (
+                      <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-semibold text-primary">
+                        Team: {t.registrations.teams.name}
+                      </span>
+                    )}
+                  </div>
                   <div className="line-clamp-1 font-display text-base font-semibold">
                     {t.events?.title}
                   </div>
