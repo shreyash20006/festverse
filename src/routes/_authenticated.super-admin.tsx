@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { 
   Building2, Users, Calendar, Coins, ShieldAlert, Activity, 
-  Plus, Power, Trash2, AlertTriangle, ShieldCheck, Heart, ScrollText
+  Plus, Power, Trash2, AlertTriangle, ShieldCheck, Heart, ScrollText, 
+  ImagePlus, Mail, Phone, MapPin, Palette
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -39,6 +40,12 @@ function SuperAdminDashboard() {
   const [activeTab, setActiveTab] = useState<"colleges" | "subscriptions" | "logs">("colleges");
   const [colName, setColName] = useState("");
   const [colSlug, setColSlug] = useState("");
+  const [colShortName, setColShortName] = useState("");
+  const [colLogoUrl, setColLogoUrl] = useState("");
+  const [colEmail, setColEmail] = useState("");
+  const [colPhone, setColPhone] = useState("");
+  const [colAddress, setColAddress] = useState("");
+  const [colColor, setColColor] = useState("#6D28D9");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
@@ -154,7 +161,17 @@ function SuperAdminDashboard() {
 
       const { data: col, error } = await supabase
         .from("colleges")
-        .insert({ name: colName, slug: colSlug.toLowerCase().trim(), is_active: true })
+        .insert({
+          name: colName,
+          slug: colSlug.toLowerCase().trim(),
+          short_name: colShortName || null,
+          logo_url: colLogoUrl || null,
+          primary_color: colColor || null,
+          contact_email: colEmail || null,
+          contact_phone: colPhone || null,
+          address: colAddress || null,
+          is_active: true,
+        })
         .select("id")
         .single();
       if (error) throw error;
@@ -168,8 +185,9 @@ function SuperAdminDashboard() {
 
       toast.success("College portal created successfully!");
       setDialogOpen(false);
-      setColName("");
-      setColSlug("");
+      setColName(""); setColSlug(""); setColShortName("");
+      setColLogoUrl(""); setColEmail(""); setColPhone("");
+      setColAddress(""); setColColor("#6D28D9");
       refetchColleges();
       qc.invalidateQueries({ queryKey: ["super-admin", "stats"] });
     } catch (err: any) {
@@ -199,38 +217,67 @@ function SuperAdminDashboard() {
                 <Plus className="mr-1.5 h-4 w-4" /> Add New College
               </Button>
             </DialogTrigger>
-            <DialogContent className="rounded-3xl border border-border/80 bg-card/95 backdrop-blur-md max-w-md shadow-elevated">
+            <DialogContent className="rounded-3xl border border-border/80 bg-card/95 backdrop-blur-md max-w-lg shadow-elevated max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle className="text-xl font-bold tracking-tight">Register University Tenant</DialogTitle>
                 <DialogDescription className="text-xs">Create an isolated subdomain and database slice for a new college.</DialogDescription>
               </DialogHeader>
               <form onSubmit={handleCreate} className="space-y-4 mt-2">
-                <div className="space-y-1">
-                  <Label htmlFor="sc-name" className="text-xs font-semibold">College Name</Label>
-                  <Input
-                    id="sc-name"
-                    value={colName}
-                    onChange={(e) => setColName(e.target.value)}
-                    placeholder="e.g. Stanford University"
-                    required
-                    className="rounded-xl h-10"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="sc-slug" className="text-xs font-semibold">Subdomain Slug</Label>
-                  <div className="flex items-center gap-1.5">
-                    <Input
-                      id="sc-slug"
-                      value={colSlug}
-                      onChange={(e) => setColSlug(e.target.value.replace(/[^a-zA-Z0-9-]/g, ""))}
-                      placeholder="e.g. stanford"
-                      required
-                      className="rounded-xl h-10 text-right font-mono"
-                    />
-                    <span className="text-xs text-muted-foreground font-mono">.{BRAND.defaultDomain}</span>
+                {/* Basic Info */}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="sm:col-span-2 space-y-1">
+                    <Label htmlFor="sc-name" className="text-xs font-semibold">College Name *</Label>
+                    <Input id="sc-name" value={colName} onChange={(e) => setColName(e.target.value)} placeholder="e.g. Stanford University" required className="rounded-xl h-10" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="sc-short" className="text-xs font-semibold">Short Name / Abbr.</Label>
+                    <Input id="sc-short" value={colShortName} onChange={(e) => setColShortName(e.target.value)} placeholder="e.g. SU" className="rounded-xl h-10" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="sc-slug" className="text-xs font-semibold">Subdomain Slug *</Label>
+                    <div className="flex items-center gap-1.5">
+                      <Input id="sc-slug" value={colSlug} onChange={(e) => setColSlug(e.target.value.replace(/[^a-zA-Z0-9-]/g, ""))} placeholder="stanford" required className="rounded-xl h-10 font-mono" />
+                      <span className="text-xs text-muted-foreground font-mono whitespace-nowrap">.{BRAND.defaultDomain}</span>
+                    </div>
                   </div>
                 </div>
-                <Button type="submit" disabled={busy} className="w-full rounded-full bg-gradient-brand text-white mt-4 h-10 font-bold">
+
+                {/* Logo */}
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold flex items-center gap-1"><ImagePlus className="h-3.5 w-3.5" /> Logo URL (optional)</Label>
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 shrink-0 rounded-xl border border-border bg-muted/40 flex items-center justify-center overflow-hidden">
+                      {colLogoUrl ? <img src={colLogoUrl} alt="" className="h-full w-full object-contain p-1.5" onError={() => setColLogoUrl("")} /> : <Building2 className="h-6 w-6 text-muted-foreground/40" />}
+                    </div>
+                    <Input value={colLogoUrl} onChange={(e) => setColLogoUrl(e.target.value)} placeholder="https://example.com/logo.png" className="rounded-xl h-10 text-xs" />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">College admins can upload a logo from Settings after onboarding.</p>
+                </div>
+
+                {/* Contact */}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold flex items-center gap-1"><Mail className="h-3.5 w-3.5" /> Contact Email</Label>
+                    <Input type="email" value={colEmail} onChange={(e) => setColEmail(e.target.value)} placeholder="admin@college.edu" className="rounded-xl h-10 text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold flex items-center gap-1"><Phone className="h-3.5 w-3.5" /> Contact Phone</Label>
+                    <Input type="tel" value={colPhone} onChange={(e) => setColPhone(e.target.value)} placeholder="+91 98765 43210" className="rounded-xl h-10 text-sm" />
+                  </div>
+                  <div className="sm:col-span-2 space-y-1">
+                    <Label className="text-xs font-semibold flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> Address</Label>
+                    <Input value={colAddress} onChange={(e) => setColAddress(e.target.value)} placeholder="123 University Ave, City, State" className="rounded-xl h-10 text-sm" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold flex items-center gap-1"><Palette className="h-3.5 w-3.5" /> Brand Color</Label>
+                    <div className="flex items-center gap-2">
+                      <input type="color" value={colColor} onChange={(e) => setColColor(e.target.value)} className="h-10 w-12 rounded-lg border border-border cursor-pointer p-0.5" />
+                      <Input value={colColor} onChange={(e) => setColColor(e.target.value)} placeholder="#6D28D9" className="rounded-xl h-10 font-mono text-sm" maxLength={7} />
+                    </div>
+                  </div>
+                </div>
+
+                <Button type="submit" disabled={busy} className="w-full rounded-full bg-gradient-brand text-white mt-2 h-10 font-bold cursor-pointer">
                   {busy ? "Provisioning..." : "Launch Tenant"}
                 </Button>
               </form>
