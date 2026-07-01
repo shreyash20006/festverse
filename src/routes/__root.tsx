@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/components/auth-provider";
+import { TenantProvider } from "@/components/tenant-provider";
 import { Toaster } from "@/components/ui/sonner";
 
 
@@ -116,10 +117,12 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Outlet />
-        <Toaster position="top-center" richColors />
-      </AuthProvider>
+      <TenantProvider>
+        <AuthProvider>
+          <Outlet />
+          <Toaster position="top-center" richColors />
+        </AuthProvider>
+      </TenantProvider>
     </QueryClientProvider>
   );
 }

@@ -39,6 +39,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { CommandPalette } from "./command-palette";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/components/auth-provider";
 
 const NAV = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -77,9 +78,21 @@ function useTheme() {
 
 function SidebarNav({ collapsed, onItemClick }: { collapsed?: boolean; onItemClick?: () => void }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { roles } = useAuth();
+
+  const filteredNav = NAV.filter((it) => {
+    if (roles.includes("scanner") && !roles.includes("college_admin") && !roles.includes("super_admin")) {
+      return it.to === "/admin/scanner";
+    }
+    if (roles.includes("organizer") && !roles.includes("college_admin") && !roles.includes("super_admin")) {
+      return it.to !== "/admin/settings" && it.to !== "/admin/audit" && it.to !== "/admin/volunteers";
+    }
+    return true;
+  });
+
   return (
     <nav className="flex flex-col gap-1.5 px-3">
-      {NAV.map((it) => {
+      {filteredNav.map((it) => {
         const active = it.exact ? pathname === it.to : pathname.startsWith(it.to);
         return (
           <Link
@@ -139,6 +152,17 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const { dark, toggle } = useTheme();
+  
+  const { roles } = useAuth();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+
+  useEffect(() => {
+    if (roles.includes("scanner") && !roles.includes("college_admin") && !roles.includes("super_admin")) {
+      if (pathname !== "/admin/scanner") {
+        window.location.href = "/admin/scanner";
+      }
+    }
+  }, [roles, pathname]);
 
   const { data: me } = useQuery({
     queryKey: ["admin", "me"],

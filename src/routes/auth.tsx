@@ -31,12 +31,41 @@ function AuthPage() {
   const [fullName, setFullName] = useState("");
   const [busy, setBusy] = useState(false);
 
-  const goNext = () => {
-    // Always send through /my-tickets — the _authenticated gate will detour to
-    // /verify-prn for unverified students and right back to the intended page
-    // (or /my-tickets) once their PRN is linked.
-    const dest = redirect && redirect.startsWith("/") ? redirect : "/my-tickets";
-    window.location.href = dest;
+  const goNext = async () => {
+    if (redirect && redirect.startsWith("/")) {
+      window.location.href = redirect;
+      return;
+    }
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const uid = session?.user?.id;
+      if (!uid) {
+        window.location.href = "/student";
+        return;
+      }
+
+      // Query roles
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", uid);
+
+      const roleNames = (roles ?? []).map((r: any) => r.role);
+
+      if (roleNames.includes("super_admin")) {
+        window.location.href = "/super-admin";
+      } else if (roleNames.includes("college_admin") || roleNames.includes("organizer")) {
+        window.location.href = "/admin";
+      } else if (roleNames.includes("scanner")) {
+        window.location.href = "/admin/scanner";
+      } else {
+        window.location.href = "/student";
+      }
+    } catch (e) {
+      console.error("Redirect resolution failed", e);
+      window.location.href = "/student";
+    }
   };
 
 

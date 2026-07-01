@@ -16,6 +16,8 @@ import { Route as EventsIndexRouteImport } from './routes/events.index'
 import { Route as VerifyTokenRouteImport } from './routes/verify.$token'
 import { Route as EventsSlugRouteImport } from './routes/events.$slug'
 import { Route as AuthenticatedVerifyPrnRouteImport } from './routes/_authenticated.verify-prn'
+import { Route as AuthenticatedSuperAdminRouteImport } from './routes/_authenticated.super-admin'
+import { Route as AuthenticatedStudentRouteImport } from './routes/_authenticated.student'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated.profile'
 import { Route as AuthenticatedMyTicketsRouteImport } from './routes/_authenticated.my-tickets'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated.admin'
@@ -64,6 +66,16 @@ const EventsSlugRoute = EventsSlugRouteImport.update({
 const AuthenticatedVerifyPrnRoute = AuthenticatedVerifyPrnRouteImport.update({
   id: '/verify-prn',
   path: '/verify-prn',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSuperAdminRoute = AuthenticatedSuperAdminRouteImport.update({
+  id: '/super-admin',
+  path: '/super-admin',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedStudentRoute = AuthenticatedStudentRouteImport.update({
+  id: '/student',
+  path: '/student',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
@@ -158,6 +170,8 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/my-tickets': typeof AuthenticatedMyTicketsRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/student': typeof AuthenticatedStudentRoute
+  '/super-admin': typeof AuthenticatedSuperAdminRoute
   '/verify-prn': typeof AuthenticatedVerifyPrnRoute
   '/events/$slug': typeof EventsSlugRoute
   '/verify/$token': typeof VerifyTokenRoute
@@ -180,6 +194,8 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/my-tickets': typeof AuthenticatedMyTicketsRoute
   '/profile': typeof AuthenticatedProfileRoute
+  '/student': typeof AuthenticatedStudentRoute
+  '/super-admin': typeof AuthenticatedSuperAdminRoute
   '/verify-prn': typeof AuthenticatedVerifyPrnRoute
   '/events/$slug': typeof EventsSlugRoute
   '/verify/$token': typeof VerifyTokenRoute
@@ -205,6 +221,8 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/my-tickets': typeof AuthenticatedMyTicketsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
+  '/_authenticated/student': typeof AuthenticatedStudentRoute
+  '/_authenticated/super-admin': typeof AuthenticatedSuperAdminRoute
   '/_authenticated/verify-prn': typeof AuthenticatedVerifyPrnRoute
   '/events/$slug': typeof EventsSlugRoute
   '/verify/$token': typeof VerifyTokenRoute
@@ -230,6 +248,8 @@ export interface FileRouteTypes {
     | '/admin'
     | '/my-tickets'
     | '/profile'
+    | '/student'
+    | '/super-admin'
     | '/verify-prn'
     | '/events/$slug'
     | '/verify/$token'
@@ -252,6 +272,8 @@ export interface FileRouteTypes {
     | '/auth'
     | '/my-tickets'
     | '/profile'
+    | '/student'
+    | '/super-admin'
     | '/verify-prn'
     | '/events/$slug'
     | '/verify/$token'
@@ -276,6 +298,8 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/my-tickets'
     | '/_authenticated/profile'
+    | '/_authenticated/student'
+    | '/_authenticated/super-admin'
     | '/_authenticated/verify-prn'
     | '/events/$slug'
     | '/verify/$token'
@@ -353,6 +377,20 @@ declare module '@tanstack/react-router' {
       path: '/verify-prn'
       fullPath: '/verify-prn'
       preLoaderRoute: typeof AuthenticatedVerifyPrnRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/super-admin': {
+      id: '/_authenticated/super-admin'
+      path: '/super-admin'
+      fullPath: '/super-admin'
+      preLoaderRoute: typeof AuthenticatedSuperAdminRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/student': {
+      id: '/_authenticated/student'
+      path: '/student'
+      fullPath: '/student'
+      preLoaderRoute: typeof AuthenticatedStudentRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/profile': {
@@ -508,6 +546,8 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedMyTicketsRoute: typeof AuthenticatedMyTicketsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
+  AuthenticatedStudentRoute: typeof AuthenticatedStudentRoute
+  AuthenticatedSuperAdminRoute: typeof AuthenticatedSuperAdminRoute
   AuthenticatedVerifyPrnRoute: typeof AuthenticatedVerifyPrnRoute
   AuthenticatedTicketsIdRoute: typeof AuthenticatedTicketsIdRoute
 }
@@ -516,6 +556,8 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedMyTicketsRoute: AuthenticatedMyTicketsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
+  AuthenticatedStudentRoute: AuthenticatedStudentRoute,
+  AuthenticatedSuperAdminRoute: AuthenticatedSuperAdminRoute,
   AuthenticatedVerifyPrnRoute: AuthenticatedVerifyPrnRoute,
   AuthenticatedTicketsIdRoute: AuthenticatedTicketsIdRoute,
 }
@@ -536,3 +578,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

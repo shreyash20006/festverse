@@ -9,6 +9,8 @@ import { EventCard, type EventCardData } from "@/components/event-card";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 
+import { useTenant } from "@/components/tenant-provider";
+
 const SearchSchema = z.object({
   q: z.string().optional(),
   category: z.string().optional(),
@@ -34,20 +36,22 @@ function EventsPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const [q, setQ] = useState(search.q ?? "");
+  const { collegeId } = useTenant();
 
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ["events", "list", search.category, search.free],
+    queryKey: ["events", "list", search.category, search.free, collegeId],
     queryFn: async (): Promise<EventCardData[]> => {
       let query = supabase
         .from("events")
         .select(
           "id, slug, title, short_description, category, banner_url, venue, start_at, is_paid, price_inr, capacity, featured"
         )
-        .eq("status", "published")
-        .order("start_at", { ascending: true });
+        .eq("status", "published");
+      if (collegeId) query = query.eq("college_id", collegeId);
       if (search.category) query = query.eq("category", search.category as any);
       if (search.free) query = query.eq("is_paid", false);
-      const { data, error } = await query;
+      
+      const { data, error } = await query.order("start_at", { ascending: true });
       if (error) throw error;
       return data as EventCardData[];
     },
