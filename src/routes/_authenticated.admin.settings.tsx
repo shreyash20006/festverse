@@ -12,7 +12,7 @@ import { toast } from "sonner";
 import { CreditCard, ShieldCheck, KeyRound } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/settings")({
-  head: () => ({ meta: [{ title: "Settings · Admin · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: "Settings · Admin · FestVerse" }] }),
   component: SettingsPage,
 });
 

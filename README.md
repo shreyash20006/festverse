@@ -1,9 +1,9 @@
-# CampusConnect
+# FestVerse
 
 ## Purpose & Vision
 
 ### Our Mission
-CampusConnect simplifies how colleges organize, manage, and participate in events by providing one secure, modern platform for event registration, ticketing, attendance, payments, certificates, and analytics.
+FestVerse simplifies how colleges organize, manage, and participate in events by providing one secure, modern platform for event registration, ticketing, attendance, payments, certificates, and analytics.
 
 We replace manual Google Forms, spreadsheets, and paper attendance with a seamless digital experience.
 
@@ -18,11 +18,11 @@ Most colleges currently use:
 * **Manual certificate creation** and distribution
 * **WhatsApp groups** for announcement coordination
 
-This process is slow, error-prone, and difficult to manage. **CampusConnect automates the entire workflow.**
+This process is slow, error-prone, and difficult to manage. **FestVerse automates the entire workflow.**
 
 ---
 
-## What CampusConnect Does
+## What FestVerse Does
 
 ### For Students
 * **Discover**: Find upcoming campus events easily.
@@ -73,7 +73,7 @@ This process is slow, error-prone, and difficult to manage. **CampusConnect auto
 ---
 
 ## Future Vision
-CampusConnect is designed to scale from a single-college platform into a multi-college SaaS.
+FestVerse is designed to scale from a single-college platform into a multi-college SaaS.
 * **Multi-College SaaS**: Host multiple colleges under one application.
 * **Branding**: Custom branding and subdomain/domain mappings for individual colleges.
 * **Payment Gateways**: College-specific checkout integrations.

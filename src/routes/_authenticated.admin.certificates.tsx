@@ -21,8 +21,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
+import { BRAND } from "@/lib/brand";
+
 export const Route = createFileRoute("/_authenticated/admin/certificates")({
-  head: () => ({ meta: [{ title: "Certificates · Admin · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: `Certificates · Admin · ${BRAND.appName}` }] }),
   component: CertificatesPage,
 });
 
@@ -425,7 +427,7 @@ function CertificatesPage() {
                     CERTIFICATE OF APPRECIATION
                   </h2>
                   <p className="text-xs uppercase tracking-[0.25em] text-muted-foreground font-semibold">
-                    CampusConnect verified achievement
+                    {BRAND.appName} verified achievement
                   </p>
                 </div>
 

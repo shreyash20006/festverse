@@ -30,7 +30,7 @@ import {
 import { KpiCard } from "@/components/admin/kpi-card";
 
 export const Route = createFileRoute("/_authenticated/admin/")({
-  head: () => ({ meta: [{ title: "Dashboard · Admin · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: "Dashboard · Admin · FestVerse" }] }),
   component: AdminDashboard,
 });
 

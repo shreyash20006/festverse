@@ -21,9 +21,9 @@ export const Route = createFileRoute("/events/")({
   validateSearch: SearchSchema,
   head: () => ({
     meta: [
-      { title: "All events — CampusConnect" },
+      { title: "All events — FestVerse" },
       { name: "description", content: "Browse all college events. Filter by category, price and date." },
-      { property: "og:title", content: "All events — CampusConnect" },
+      { property: "og:title", content: "All events — FestVerse" },
       { property: "og:description", content: "Browse all college events." },
     ],
   }),

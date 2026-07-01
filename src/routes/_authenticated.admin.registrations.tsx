@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/admin/registrations")({
-  head: () => ({ meta: [{ title: "Registrations · Admin · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: "Registrations · Admin · FestVerse" }] }),
   component: RegistrationsPage,
 });
 

@@ -33,7 +33,7 @@ export const Route = createFileRoute("/events/$slug")({
   head: ({ loaderData }) => ({
     meta: loaderData
       ? [
-          { title: `${loaderData.event.title} — CampusConnect` },
+          { title: `${loaderData.event.title} — FestVerse` },
           {
             name: "description",
             content:
@@ -205,7 +205,7 @@ function EventDetailPage() {
           orderId: prep.orderId,
           amount: prep.amount,
           currency: prep.currency,
-          name: "CampusConnect",
+          name: "FestVerse",
           description: prep.eventTitle,
           prefill: {
             name: prep.customer.name,

@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Pencil, Trash2 } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/events")({
-  head: () => ({ meta: [{ title: "Events · Admin · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: "Events · Admin · FestVerse" }] }),
   component: AdminEventsList,
 });
 

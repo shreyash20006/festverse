@@ -18,8 +18,10 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 
+import { BRAND } from "@/lib/brand";
+
 export const Route = createFileRoute("/_authenticated/admin/reports")({
-  head: () => ({ meta: [{ title: "Reports · Admin · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: `Reports · Admin · ${BRAND.appName}` }] }),
   component: ReportsPage,
 });
 
@@ -253,7 +255,7 @@ function ReportsPage() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `campusconnect_report_${reportType}_${Date.now()}.csv`);
+    link.setAttribute("download", `${BRAND.shortName.toLowerCase()}_report_${reportType}_${Date.now()}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

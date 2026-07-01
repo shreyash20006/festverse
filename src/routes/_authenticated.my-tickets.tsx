@@ -9,7 +9,7 @@ import { CategoryBadge } from "@/components/category-badge";
 import { Ticket, Calendar, MapPin } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/my-tickets")({
-  head: () => ({ meta: [{ title: "My Tickets — CampusConnect" }] }),
+  head: () => ({ meta: [{ title: "My Tickets — FestVerse" }] }),
   component: MyTicketsPage,
 });
 

@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import { BannerUpload } from "@/components/banner-upload";
 
 export const Route = createFileRoute("/_authenticated/admin/events/$id/edit")({
-  head: () => ({ meta: [{ title: "Edit event · Admin · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: "Edit event · Admin · FestVerse" }] }),
   component: EditEventPage,
 });
 

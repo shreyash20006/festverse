@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { BRAND } from "@/lib/brand";
 import { Award, Compass, Eye, Heart, ShieldAlert, Sparkles, Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/about")({
-  head: () => ({ meta: [{ title: "About Us · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: `About Us · ${BRAND.appName}` }] }),
   component: AboutPage,
 });
 
@@ -24,7 +25,7 @@ function AboutPage() {
             Redefining campus events.
           </h1>
           <p className="mt-4 text-sm sm:text-base text-muted-foreground max-w-xl mx-auto leading-relaxed">
-            CampusConnect was born out of a simple idea: making it trivial for student chapters to organize, manage, and scale event operations without manual overhead.
+            {BRAND.appName} was born out of a simple idea: making it trivial for student chapters to organize, manage, and scale event operations without manual overhead.
           </p>
         </div>
       </section>
@@ -83,7 +84,7 @@ function AboutPage() {
       <section className="container mx-auto px-6 py-20 text-center max-w-2xl">
         <h2 className="font-display text-2xl font-bold text-foreground">Trusted by universities</h2>
         <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-          From local technical institutes to national universities, CampusConnect powers events with 99.9% uptime, verified PRN checks, and secure multi-tenant college environments.
+          From local technical institutes to national universities, {BRAND.appName} powers events with 99.9% uptime, verified PRN checks, and secure multi-tenant college environments.
         </p>
       </section>
 

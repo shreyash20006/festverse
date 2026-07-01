@@ -9,6 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Loader2, CheckCircle2, AlertTriangle, Mail, ShieldCheck } from "lucide-react";
+import { BRAND } from "@/lib/brand";
+import { Logo } from "@/components/brand-logo";
 
 const SearchSchema = z.object({ redirect: z.string().optional() });
 
@@ -16,14 +18,12 @@ export const Route = createFileRoute("/_authenticated/verify-prn")({
   validateSearch: SearchSchema,
   head: () => ({
     meta: [
-      { title: "Verify your student identity · CampusConnect" },
+      { title: `Verify your student identity · ${BRAND.appName}` },
       { name: "robots", content: "noindex,nofollow" },
     ],
   }),
   component: VerifyPrnPage,
 });
-
-const LOGO = "https://res.cloudinary.com/dsqxboxoc/image/upload/v1782801547/campus_logo_oj2pcn.png";
 
 type Status = "idle" | "checking" | "success" | "not_found" | "taken" | "error";
 
@@ -35,7 +35,7 @@ function VerifyPrnPage() {
 
   const [prn, setPrn] = useState("");
   const [status, setStatus] = useState<Status>("idle");
-  const [supportEmail, setSupportEmail] = useState("support@campusconnect.edu");
+  const [supportEmail, setSupportEmail] = useState(BRAND.supportEmail);
 
   // Already verified → straight to the dashboard.
   useEffect(() => {
@@ -91,7 +91,7 @@ function VerifyPrnPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/40 px-4 py-10">
       <div className="mx-auto flex max-w-md flex-col items-center text-center">
-        <img src={LOGO} alt="CampusConnect" className="h-14 w-auto" />
+        <Logo size="xl" className="mx-auto" />
         <h1 className="mt-6 font-display text-2xl font-bold tracking-tight sm:text-3xl">
           Verify your student identity
         </h1>
@@ -148,7 +148,7 @@ function VerifyPrnPage() {
               )}
               {status === "taken" && (
                 <ErrorBox icon={AlertTriangle} title="PRN already linked">
-                  This PRN is already linked to another CampusConnect account. If this is a
+                  This PRN is already linked to another {BRAND.appName} account. If this is a
                   mistake, contact your administrator.
                 </ErrorBox>
               )}

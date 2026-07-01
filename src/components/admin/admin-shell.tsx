@@ -27,6 +27,8 @@ import {
   PanelLeft,
   Command as CommandIcon,
 } from "lucide-react";
+import { BRAND } from "@/lib/brand";
+import { Logo } from "@/components/brand-logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -135,12 +137,9 @@ function SidebarNav({ collapsed, onItemClick }: { collapsed?: boolean; onItemCli
 function Brand({ collapsed }: { collapsed?: boolean }) {
   return (
     <Link to="/admin" className="flex items-center gap-2.5 px-5 py-5 group">
-      <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-brand text-white shadow-glow-sm transition-all duration-300 group-hover:scale-105">
-        <span className="font-display text-sm font-black">CC</span>
-      </div>
+      <Logo size="md" iconOnly={collapsed} />
       {!collapsed && (
         <div className="leading-tight">
-          <div className="font-display text-[14px] font-extrabold tracking-tight bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-foreground">CampusConnect</div>
           <div className="text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground/85">Admin Panel</div>
         </div>
       )}

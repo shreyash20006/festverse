@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, AlertTriangle, Camera, CameraOff } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/scanner")({
-  head: () => ({ meta: [{ title: "Scanner · Admin · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: "Scanner · Admin · FestVerse" }] }),
   component: ScannerPage,
 });
 

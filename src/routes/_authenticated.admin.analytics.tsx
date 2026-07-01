@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/admin/analytics")({
-  head: () => ({ meta: [{ title: "Analytics · Admin · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: "Analytics · Admin · FestVerse" }] }),
   component: AnalyticsPage,
 });
 

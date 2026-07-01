@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const Route = createFileRoute("/_authenticated/admin/support")({
-  head: () => ({ meta: [{ title: "Support · Admin · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: "Support · Admin · FestVerse" }] }),
   component: SupportPage,
 });
 

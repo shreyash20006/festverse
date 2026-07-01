@@ -9,7 +9,7 @@ export const Route = createFileRoute("/verify/$token")({
     const cert = Array.isArray(data) && data.length > 0 ? data[0] : null;
     return { cert };
   },
-  head: () => ({ meta: [{ title: "Verify certificate · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: "Verify certificate · FestVerse" }] }),
   component: VerifyPage,
 });
 
@@ -43,7 +43,7 @@ function VerifyPage() {
           to="/"
           className="mt-6 inline-block text-sm font-semibold text-primary hover:underline"
         >
-          ← Back to CampusConnect
+          ← Back to FestVerse
         </Link>
       </div>
     </div>

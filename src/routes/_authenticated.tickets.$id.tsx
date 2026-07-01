@@ -10,6 +10,8 @@ import { ArrowLeft, Calendar, MapPin, ShieldAlert } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { getDynamicQrToken } from "@/lib/scanner.functions";
 
+import { BRAND } from "@/lib/brand";
+
 export const Route = createFileRoute("/_authenticated/tickets/$id")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
@@ -24,7 +26,7 @@ export const Route = createFileRoute("/_authenticated/tickets/$id")({
     return { ticket: data };
   },
   head: ({ loaderData }) => ({
-    meta: [{ title: `${(loaderData as any)?.ticket?.events?.title ?? "Ticket"} — CampusConnect` }],
+    meta: [{ title: `${(loaderData as any)?.ticket?.events?.title ?? "Ticket"} — ${BRAND.appName}` }],
   }),
   notFoundComponent: () => (
     <div className="min-h-screen bg-background">

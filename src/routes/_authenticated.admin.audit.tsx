@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/admin/audit")({
-  head: () => ({ meta: [{ title: "Audit Logs · Admin · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: "Audit Logs · Admin · FestVerse" }] }),
   component: AuditLogsPage,
 });
 

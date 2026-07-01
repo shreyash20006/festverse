@@ -26,7 +26,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "CampusConnect — College Event Operations SaaS" },
+      { title: "FestVerse — College Event Operations SaaS" },
       {
         name: "description",
         content:
@@ -224,7 +224,7 @@ function HomePage() {
               Run an event? Publish it in minutes.
             </h2>
             <p className="mt-3 max-w-lg text-xs sm:text-sm text-white/90 leading-relaxed">
-              From registration to attendance to certificates — CampusConnect handles it.
+              From registration to attendance to certificates — FestVerse handles it.
               Organizers, request admin access from your council to get started.
             </p>
             <div className="mt-6">
@@ -316,7 +316,7 @@ function SaaSLandingPage({ user, events }: { user: any; events: any[] }) {
               One platform for every college event.
             </p>
             <p className="text-sm leading-relaxed text-muted-foreground max-w-xl">
-              CampusConnect helps colleges manage registrations, secure rolling QR ticketing, gateway payments, live attendance tracking, and verified participation certificates from one centralized, isolated portal.
+              FestVerse helps colleges manage registrations, secure rolling QR ticketing, gateway payments, live attendance tracking, and verified participation certificates from one centralized, isolated portal.
             </p>
             
             <div className="flex flex-wrap gap-3.5 pt-2">
@@ -359,7 +359,7 @@ function SaaSLandingPage({ user, events }: { user: any; events: any[] }) {
                           required
                           className="rounded-xl h-10 border-border/85 text-right font-mono"
                         />
-                        <span className="text-xs text-muted-foreground font-mono">.campusconnect.app</span>
+                        <span className="text-xs text-muted-foreground font-mono">.festverse.app</span>
                       </div>
                     </div>
                     <Button type="submit" disabled={busy} className="w-full rounded-full bg-gradient-brand text-white mt-4 h-10 font-bold active:scale-98">
@@ -599,14 +599,14 @@ function SaaSLandingPage({ user, events }: { user: any; events: any[] }) {
 
       {/* Comparison Grid Section */}
       <section className="container mx-auto px-6 py-20 max-w-4xl border-b border-border/45">
-        <h2 className="font-display text-2xl font-bold tracking-tight text-center mb-10">Traditional vs CampusConnect</h2>
+        <h2 className="font-display text-2xl font-bold tracking-tight text-center mb-10">Traditional vs FestVerse</h2>
         <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-card">
           <table className="w-full text-sm text-left">
             <thead className="border-b border-border bg-muted/50 text-xs font-semibold text-muted-foreground uppercase">
               <tr>
                 <th className="px-6 py-4">Workflow Layer</th>
                 <th className="px-6 py-4">Traditional Tooling</th>
-                <th className="px-6 py-4 text-primary font-bold">CampusConnect</th>
+                <th className="px-6 py-4 text-primary font-bold">FestVerse</th>
               </tr>
             </thead>
             <tbody>
@@ -688,7 +688,7 @@ function SaaSLandingPage({ user, events }: { user: any; events: any[] }) {
         <h2 className="font-display text-2xl font-bold text-center mb-8">FAQ Quick Center</h2>
         <Accordion type="single" collapsible className="space-y-4">
           {[
-            { q: "How does PRN check work?", a: "CampusConnect matches students registering against the whitelisted database Excel sheet uploaded by the college administrator, blocking outside invalid registrants." },
+            { q: "How does PRN check work?", a: "FestVerse matches students registering against the whitelisted database Excel sheet uploaded by the college administrator, blocking outside invalid registrants." },
             { q: "Are ticket codes secure?", a: "Yes, our tickets use rolling QR tokens that refresh every 30 seconds client-side. Screenshots won't pass check-in." }
           ].map((faq, i) => (
             <AccordionItem key={i} value={`faq-${i}`} className="border border-border/80 bg-card rounded-2xl px-6 py-1 shadow-sm">

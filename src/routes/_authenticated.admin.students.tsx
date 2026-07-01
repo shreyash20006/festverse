@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Upload, Users } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/students")({
-  head: () => ({ meta: [{ title: "Students · Admin · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: "Students · Admin · FestVerse" }] }),
   component: StudentsPage,
 });
 

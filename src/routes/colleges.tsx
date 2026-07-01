@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/colleges")({
-  head: () => ({ meta: [{ title: "Colleges · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: "Colleges · FestVerse" }] }),
   component: CollegesPage,
 });
 

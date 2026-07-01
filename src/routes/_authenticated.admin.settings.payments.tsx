@@ -12,8 +12,10 @@ import { toast } from "sonner";
 import { CreditCard, KeyRound, CheckCircle2, XCircle, Loader2, ArrowLeft, ExternalLink } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 
+import { BRAND } from "@/lib/brand";
+
 export const Route = createFileRoute("/_authenticated/admin/settings/payments")({
-  head: () => ({ meta: [{ title: "Payment Settings · Admin · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: `Payment Settings · Admin · ${BRAND.appName}` }] }),
   component: CollegePaymentSettingsPage,
 });
 
@@ -180,7 +182,7 @@ function CollegePaymentSettingsPage() {
               {
                 id: "platform",
                 title: "Use Platform Gateway",
-                desc: "Payments will be processed via CampusConnect's master account. Settlement will be credited manually minus commission.",
+                desc: `Payments will be processed via ${BRAND.appName}'s master account. Settlement will be credited manually minus commission.`,
               },
               {
                 id: "custom",

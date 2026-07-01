@@ -1,23 +1,16 @@
 import { Link } from "@tanstack/react-router";
 import { Github, Heart, Mail, ExternalLink, ShieldCheck } from "lucide-react";
+import { BRAND } from "@/lib/brand";
+import { Logo } from "@/components/brand-logo";
 
 export function SiteFooter() {
   return (
     <footer className="border-t border-border/80 bg-background/50 py-16 backdrop-blur-sm">
       <div className="container mx-auto grid gap-8 px-4 sm:px-6 md:grid-cols-4 lg:gap-12">
         <div className="md:col-span-2 space-y-4">
-          <div className="flex items-center gap-2.5 group">
-            <img
-              src="https://res.cloudinary.com/dsqxboxoc/image/upload/v1782801547/campus_logo_oj2pcn.png"
-              alt="CampusConnect"
-              className="h-8 w-8 rounded-xl object-contain shadow-glow-sm transition-transform group-hover:scale-105"
-            />
-            <span className="font-display text-lg font-bold tracking-tight bg-gradient-brand bg-clip-text text-transparent">
-              CampusConnect
-            </span>
-          </div>
+          <Logo size="md" />
           <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
-            CampusConnect is the ultimate university event management platform. We automate ticketing, payments, check-ins, and certificate distribution so you can focus on building experiences.
+            {BRAND.appName} is the ultimate university event management platform. We automate ticketing, payments, check-ins, and certificate distribution so you can focus on building experiences.
           </p>
           <div className="flex items-center gap-3 pt-2">
             <a
@@ -77,7 +70,7 @@ export function SiteFooter() {
 
       <div className="container mx-auto mt-12 border-t border-border/60 px-4 pt-6 text-[10px] text-muted-foreground sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <span>© {new Date().getFullYear()} CampusConnect. All rights reserved.</span>
+          <span>© {new Date().getFullYear()} {BRAND.appName}. All rights reserved.</span>
           <span className="hover:underline cursor-pointer">Privacy Policy</span>
           <span className="hover:underline cursor-pointer">Terms of Service</span>
         </div>

@@ -19,6 +19,8 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { createCollegeTenant } from "@/lib/admin.functions";
+import { BRAND } from "@/lib/brand";
+import { Logo } from "@/components/brand-logo";
 
 const publicNavItems = [
   { to: "/", label: "Home" },
@@ -93,14 +95,7 @@ export function SiteHeader() {
             </SheetTrigger>
             <SheetContent side="left" className="w-72 p-0 border-r border-border/80 bg-card/95 backdrop-blur-lg">
               <div className="flex items-center gap-3 border-b border-border/60 px-5 py-4">
-                <img
-                  src="https://res.cloudinary.com/dsqxboxoc/image/upload/v1782801547/campus_logo_oj2pcn.png"
-                  alt=""
-                  className="h-9 w-9 rounded-xl object-contain shadow-glow-sm"
-                />
-                <div className="flex flex-col leading-none">
-                  <span className="font-display text-base font-bold tracking-tight bg-gradient-brand bg-clip-text text-transparent">CampusConnect</span>
-                </div>
+                <Logo size="md" />
               </div>
               <nav className="flex flex-col gap-1.5 p-4">
                 {publicNavItems.map((it) => {
@@ -148,18 +143,7 @@ export function SiteHeader() {
 
           {/* Logo */}
           <Link to="/" className="flex min-w-0 items-center gap-2.5 group">
-            <div className="relative overflow-hidden rounded-xl transition-all duration-300 group-hover:scale-105 active:scale-95">
-              <img
-                src="https://res.cloudinary.com/dsqxboxoc/image/upload/v1782801547/campus_logo_oj2pcn.png"
-                alt="CampusConnect"
-                className="h-9 w-9 shrink-0 rounded-xl object-contain transition-transform duration-500 group-hover:rotate-6"
-              />
-            </div>
-            <div className="flex min-w-0 flex-col leading-none">
-              <span className="truncate font-display text-base font-extrabold tracking-tight sm:text-lg bg-gradient-to-r from-foreground via-foreground to-foreground/80 bg-clip-text text-foreground group-hover:text-primary transition-colors">
-                CampusConnect
-              </span>
-            </div>
+            <Logo size="md" />
           </Link>
         </div>
 
@@ -303,7 +287,7 @@ export function SiteHeader() {
                   required
                   className="rounded-xl h-10 border-border/85 text-right font-mono"
                 />
-                <span className="text-xs text-muted-foreground font-mono">.campusconnect.app</span>
+                <span className="text-xs text-muted-foreground font-mono">.{BRAND.defaultDomain}</span>
               </div>
             </div>
             <Button type="submit" disabled={busy} className="w-full rounded-full bg-gradient-brand text-white mt-4 h-10 font-bold active:scale-98">

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Check, Info, HelpCircle } from "lucide-react";
 
 export const Route = createFileRoute("/pricing")({
-  head: () => ({ meta: [{ title: "Pricing Plans · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: "Pricing Plans · FestVerse" }] }),
   component: PricingPage,
 });
 

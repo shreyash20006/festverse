@@ -13,7 +13,7 @@ import { bypassMfaWithRecoveryCode } from "@/lib/auth-security.functions";
 export const Route = createFileRoute("/_authenticated/auth/mfa-verify")({
   head: () => ({
     meta: [
-      { title: "Multi-Factor Authentication Verification — CampusConnect" },
+      { title: "Multi-Factor Authentication Verification — FestVerse" },
       { name: "robots", content: "noindex,nofollow" },
     ],
   }),

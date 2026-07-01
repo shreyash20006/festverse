@@ -13,6 +13,7 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { BRAND } from "@/lib/brand";
 
 export const Route = createFileRoute("/_authenticated/super-admin")({
   beforeLoad: async ({ location }) => {
@@ -29,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/super-admin")({
       throw redirect({ to: "/student" });
     }
   },
-  head: () => ({ meta: [{ title: "Super Admin · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: `Super Admin · ${BRAND.appName}` }] }),
   component: SuperAdminDashboard,
 });
 
@@ -226,7 +227,7 @@ function SuperAdminDashboard() {
                       required
                       className="rounded-xl h-10 text-right font-mono"
                     />
-                    <span className="text-xs text-muted-foreground font-mono">.campusconnect.app</span>
+                    <span className="text-xs text-muted-foreground font-mono">.{BRAND.defaultDomain}</span>
                   </div>
                 </div>
                 <Button type="submit" disabled={busy} className="w-full rounded-full bg-gradient-brand text-white mt-4 h-10 font-bold">
@@ -303,7 +304,7 @@ function SuperAdminDashboard() {
                       return (
                         <tr key={c.id} className="hover:bg-muted/10 transition-colors">
                           <td className="px-6 py-4 font-bold text-foreground">{c.name}</td>
-                          <td className="px-6 py-4 font-mono text-muted-foreground">{c.slug}.campusconnect.app</td>
+                          <td className="px-6 py-4 font-mono text-muted-foreground">{c.slug}.{BRAND.defaultDomain}</td>
                           <td className="px-6 py-4 text-muted-foreground">
                             {new Date(c.created_at).toLocaleDateString()}
                           </td>

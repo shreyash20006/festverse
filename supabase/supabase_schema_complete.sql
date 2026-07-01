@@ -1,5 +1,5 @@
 -- ==================================================================
--- CampusConnect Complete Database Schema (All Migrations Consolidated)
+-- FestVerse Complete Database Schema (All Migrations Consolidated)
 -- ==================================================================
 
 -- ==========================================

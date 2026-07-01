@@ -9,10 +9,12 @@ import { toast } from "sonner";
 import { ShieldCheck, Copy, Check, QrCode as QrIcon, AlertCircle, RefreshCw } from "lucide-react";
 import QRCode from "qrcode";
 
+import { BRAND } from "@/lib/brand";
+
 export const Route = createFileRoute("/_authenticated/auth/mfa-enroll")({
   head: () => ({
     meta: [
-      { title: "Enable Two-Factor Authentication — CampusConnect" },
+      { title: `Enable Two-Factor Authentication — ${BRAND.appName}` },
       { name: "robots", content: "noindex,nofollow" },
     ],
   }),
@@ -54,8 +56,8 @@ function MfaEnrollPage() {
     try {
       const { data, error } = await supabase.auth.mfa.enroll({
         factorType: "totp",
-        issuer: "CampusConnect",
-        friendlyName: `CampusConnect (${user?.email})`,
+        issuer: BRAND.appName,
+        friendlyName: `${BRAND.appName} (${user?.email})`,
       });
 
       if (error) throw error;

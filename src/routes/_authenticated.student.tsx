@@ -21,7 +21,7 @@ export const Route = createFileRoute("/_authenticated/student")({
       throw redirect({ to: "/auth", search: { redirect: location.pathname } });
     }
   },
-  head: () => ({ meta: [{ title: "Student Portal · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: "Student Portal · FestVerse" }] }),
   component: StudentDashboard,
 });
 

@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Mail, Phone, MapPin, Send, MessageSquare } from "lucide-react";
 
 export const Route = createFileRoute("/contact")({
-  head: () => ({ meta: [{ title: "Contact Us · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: "Contact Us · FestVerse" }] }),
   component: ContactPage,
 });
 
@@ -71,8 +71,8 @@ function ContactPage() {
                 </div>
                 <div>
                   <span className="font-semibold text-xs text-muted-foreground uppercase block">Email support</span>
-                  <a href="mailto:support@campusconnect.app" className="text-sm font-semibold hover:underline">
-                    support@campusconnect.app
+                  <a href="mailto:support@festverse.app" className="text-sm font-semibold hover:underline">
+                    support@festverse.app
                   </a>
                 </div>
               </div>

@@ -19,7 +19,7 @@ export const Route = createFileRoute("/auth")({
   validateSearch: SearchSchema,
   head: () => ({
     meta: [
-      { title: "Sign in — CampusConnect" },
+      { title: "Sign in — FestVerse" },
       { name: "description", content: "Sign in using Google or secure passwordless Email OTP to join events." },
     ],
   }),
@@ -198,7 +198,7 @@ function AuthPage() {
         <div className="relative z-10 flex h-full flex-col justify-between p-12 text-white">
           <div className="flex items-center gap-2">
             <img src={LOGO} alt="" className="h-9 w-9 rounded-xl object-contain shadow-glow-sm" />
-            <span className="font-display text-lg font-bold tracking-tight">CampusConnect</span>
+            <span className="font-display text-lg font-bold tracking-tight">FestVerse</span>
           </div>
           <div>
             <div className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold backdrop-blur">
@@ -211,7 +211,7 @@ function AuthPage() {
               Register for events in seconds, carry a secure QR ticket on your phone, and earn verifiable certificates after every attendance.
             </p>
           </div>
-          <div className="text-xs text-white/50">© CampusConnect. Secure authentication powered by Supabase Auth.</div>
+          <div className="text-xs text-white/50">© FestVerse. Secure authentication powered by Supabase Auth.</div>
         </div>
       </div>
 
@@ -236,7 +236,7 @@ function AuthPage() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 lg:hidden mb-2">
                     <img src={LOGO} alt="" className="h-8 w-8 object-contain" />
-                    <span className="font-display font-bold text-foreground">CampusConnect</span>
+                    <span className="font-display font-bold text-foreground">FestVerse</span>
                   </div>
                   <h2 className="font-display text-3xl font-extrabold tracking-tight text-foreground">Welcome Back</h2>
                   <p className="text-xs text-muted-foreground">Sign in to manage your tickets, registrations, and certificates.</p>
@@ -295,7 +295,7 @@ function AuthPage() {
 
                 <div className="text-center pt-2">
                   <span className="text-[11px] text-muted-foreground">
-                    Need help? <a href="mailto:support@campusconnect.edu" className="font-semibold text-primary hover:underline">Contact Support</a>
+                    Need help? <a href="mailto:support@festverse.app" className="font-semibold text-primary hover:underline">Contact Support</a>
                   </span>
                 </div>
               </motion.div>

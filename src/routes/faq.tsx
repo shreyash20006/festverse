@@ -7,22 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 export const Route = createFileRoute("/faq")({
-  head: () => ({ meta: [{ title: "FAQ Center · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: "FAQ Center · FestVerse" }] }),
   component: FAQPage,
 });
 
 const FAQS = [
   {
     q: "How does PRN verification work?",
-    a: "When students register, CampusConnect cross-references their PRN (Permanent Registration Number) with their college's uploaded student list. This ensures only authenticated college students can register for restricted events, eliminating seat theft."
+    a: "When students register, FestVerse cross-references their PRN (Permanent Registration Number) with their college's uploaded student list. This ensures only authenticated college students can register for restricted events, eliminating seat theft."
   },
   {
     q: "Are the QR tickets screenshot-proof?",
-    a: "Yes! CampusConnect tickets use a rolling cryptographic QR token that refreshes every 30 seconds. Screenshots or static printouts will fail at the scanning gate, entirely preventing ticket sharing and fraud."
+    a: "Yes! FestVerse tickets use a rolling cryptographic QR token that refreshes every 30 seconds. Screenshots or static printouts will fail at the scanning gate, entirely preventing ticket sharing and fraud."
   },
   {
     q: "How do we receive payments for paid events?",
-    a: "Colleges can link their own Razorpay or Cashfree keys in the settings page. All registration fees go directly from the student's UPI/card to the college's bank account. CampusConnect charges 0% commission on payments."
+    a: "Colleges can link their own Razorpay or Cashfree keys in the settings page. All registration fees go directly from the student's UPI/card to the college's bank account. FestVerse charges 0% commission on payments."
   },
   {
     q: "How are certificates generated?",
@@ -34,7 +34,7 @@ const FAQS = [
   },
   {
     q: "Is data isolated between different colleges?",
-    a: "Absolutely. CampusConnect is built as a multi-tenant SaaS. Each college gets an isolated tenant environment, separate settings, isolated student lists, payments keys, and event logs. There is zero overlap of private data."
+    a: "Absolutely. FestVerse is built as a multi-tenant SaaS. Each college gets an isolated tenant environment, separate settings, isolated student lists, payments keys, and event logs. There is zero overlap of private data."
   }
 ];
 

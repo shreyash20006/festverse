@@ -16,7 +16,7 @@ import { ShieldCheck, ShieldAlert, Key, LogOut, History, Copy, Check, Lock, Smar
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/profile")({
-  head: () => ({ meta: [{ title: "Profile & Security — CampusConnect" }] }),
+  head: () => ({ meta: [{ title: "Profile & Security — FestVerse" }] }),
   component: ProfilePage,
 });
 

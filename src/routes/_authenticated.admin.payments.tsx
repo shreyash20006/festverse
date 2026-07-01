@@ -15,8 +15,10 @@ import {
 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
+import { BRAND } from "@/lib/brand";
+
 export const Route = createFileRoute("/_authenticated/admin/payments")({
-  head: () => ({ meta: [{ title: "Payments · Admin · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: `Payments · Admin · ${BRAND.appName}` }] }),
   component: PaymentsDashboard,
 });
 

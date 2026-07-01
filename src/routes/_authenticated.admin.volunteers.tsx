@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 
 export const Route = createFileRoute("/_authenticated/admin/volunteers")({
-  head: () => ({ meta: [{ title: "Volunteers · Admin · CampusConnect" }] }),
+  head: () => ({ meta: [{ title: "Volunteers · Admin · FestVerse" }] }),
   component: VolunteersPage,
 });
 
