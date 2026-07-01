@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, redirect } from "@tanstack/react-router";
 import { z } from "zod";
 import { useState, useEffect, useRef } from "react";
 import { Mail, ArrowRight, Calendar, Loader2, Sparkles, AlertCircle, ArrowLeft, CheckCircle2 } from "lucide-react";
@@ -12,11 +12,34 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { motion, AnimatePresence } from "framer-motion";
 import { useServerFn } from "@tanstack/react-start";
 import { logUserLoginEvent } from "@/lib/auth-security.functions";
+import { authService, profileService, roleService, sessionService, logDev } from "@/lib/auth-service";
 
 const SearchSchema = z.object({ redirect: z.string().optional() });
 
 export const Route = createFileRoute("/auth")({
   validateSearch: SearchSchema,
+  beforeLoad: async ({ search }) => {
+    logDev("auth.tsx Route beforeLoad: Checking if session exists...");
+    const session = await sessionService.getSession();
+    if (session) {
+      logDev("User already logged in, evaluating redirect route...");
+      const uid = session.user.id;
+      const rolesList = await roleService.getUserRoles(uid);
+      
+      let target = "/student";
+      if (rolesList.includes("super_admin")) {
+        target = "/super-admin";
+      } else if (rolesList.includes("college_admin") || rolesList.includes("organizer")) {
+        target = "/admin";
+      } else if (rolesList.includes("scanner")) {
+        target = "/admin/scanner";
+      }
+      
+      const targetUrl = search.redirect || target;
+      logDev("Redirecting logged-in user directly to:", targetUrl);
+      throw redirect({ to: targetUrl });
+    }
+  },
   head: () => ({
     meta: [
       { title: "Sign in — FestVerse" },
@@ -29,7 +52,7 @@ export const Route = createFileRoute("/auth")({
 const LOGO = "https://res.cloudinary.com/dsqxboxoc/image/upload/v1782801547/campus_logo_oj2pcn.png";
 
 function AuthPage() {
-  const { redirect } = Route.useSearch();
+  const { redirect: redirectParam } = Route.useSearch();
   const { refresh } = useAuth();
   const navigate = useNavigate();
 
@@ -38,6 +61,7 @@ function AuthPage() {
   const [step, setStep] = useState<"email" | "otp" | "success">("email");
   const [busy, setBusy] = useState(false);
   const [timer, setTimer] = useState(0);
+  const [errorState, setErrorState] = useState<{ title: string; message: string; type: string } | null>(null);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const logLogin = useServerFn(logUserLoginEvent);
@@ -58,16 +82,17 @@ function AuthPage() {
 
   const handleGoogle = async () => {
     setBusy(true);
+    setErrorState(null);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: window.location.origin + "/student",
-        },
-      });
-      if (error) throw error;
+      const targetRedirect = redirectParam || window.location.origin + "/student";
+      await authService.signInWithGoogle(targetRedirect);
     } catch (e: any) {
-      toast.error(e?.message ?? "Google sign-in failed");
+      logDev("Google authentication exception", e);
+      setErrorState({
+        title: "Google authentication failed",
+        message: e?.message || "We encountered an issue redirecting to Google. Please check your connection and try again.",
+        type: "google",
+      });
       setBusy(false);
     }
   };
@@ -80,22 +105,20 @@ function AuthPage() {
     }
 
     setBusy(true);
+    setErrorState(null);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: {
-          shouldCreateUser: true,
-          emailRedirectTo: window.location.origin,
-        },
-      });
-
-      if (error) throw error;
-
+      const targetRedirect = redirectParam || window.location.origin;
+      await authService.signInWithOtp(email.trim(), targetRedirect);
       toast.success("Security code sent to your email!");
       setStep("otp");
       startOtpTimer();
     } catch (err: any) {
-      toast.error(err?.message ?? "Failed to send OTP.");
+      logDev("Email OTP send exception", err);
+      setErrorState({
+        title: "Unable to send security code",
+        message: err?.message || "There was a problem sending the OTP. Please verify your email or connection and try again.",
+        type: "otp_send",
+      });
     } finally {
       setBusy(false);
     }
@@ -113,20 +136,15 @@ function AuthPage() {
     if (otpCode.length !== 6) return;
 
     setBusy(true);
+    setErrorState(null);
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        email: email.trim(),
-        token: otpCode,
-        type: "email",
-      });
-
-      if (error) throw error;
+      const data = await authService.verifyOtp(email.trim(), otpCode);
 
       // Log login event via server function
       try {
         await logLogin({ data: { method: "email_otp" } });
       } catch (err) {
-        console.error("Failed to write login audit log:", err);
+        logDev("Failed to write login audit log", err);
       }
 
       setStep("success");
@@ -134,39 +152,37 @@ function AuthPage() {
 
       // Trigger navigation after success animation
       setTimeout(async () => {
-        // Evaluate redirects and MFA checks
-        const { data: { session } } = await supabase.auth.getSession();
+        const session = await sessionService.getSession();
         const uid = session?.user?.id;
         if (!uid) {
           navigate({ to: "/student" });
           return;
         }
 
-        const [{ data: rolesData }, { data: mfaInfo }] = await Promise.all([
-          supabase.from("user_roles").select("role").eq("user_id", uid),
-          supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
+        const [rolesList, mfaInfo] = await Promise.all([
+          roleService.getUserRoles(uid),
+          supabase.auth.mfa.getAuthenticatorAssuranceLevel(), // Keep direct supabase call for MFA
         ]);
 
-        const rolesList = (rolesData ?? []).map(r => r.role);
-        const hasAdminRole = rolesList.some(r => ["super_admin", "college_admin", "organizer"].includes(r));
+        const hasAdminRole = roleService.isAdmin(rolesList);
 
         // Redirect policy matching layout check
         if (hasAdminRole) {
-          if (mfaInfo?.nextLevel === "aal2" && mfaInfo?.currentLevel === "aal1") {
+          if (mfaInfo?.data?.nextLevel === "aal2" && mfaInfo?.data?.currentLevel === "aal1") {
             navigate({ to: "/auth/mfa-verify" });
             return;
           }
         } else {
           // Student / Volunteer
-          if (mfaInfo?.nextLevel === "aal2" && mfaInfo?.currentLevel === "aal1") {
+          if (mfaInfo?.data?.nextLevel === "aal2" && mfaInfo?.data?.currentLevel === "aal1") {
             navigate({ to: "/auth/mfa-verify" });
             return;
           }
         }
 
         // If redirect param is set, route there
-        if (redirect && redirect.startsWith("/")) {
-          window.location.href = redirect;
+        if (redirectParam && redirectParam.startsWith("/")) {
+          window.location.href = redirectParam;
           return;
         }
 
@@ -183,7 +199,12 @@ function AuthPage() {
       }, 1500);
 
     } catch (err: any) {
-      toast.error(err?.message ?? "Invalid or expired verification code.");
+      logDev("OTP verification exception", err);
+      setErrorState({
+        title: "Verification failed",
+        message: err?.message || "The verification code is incorrect or expired. Please request a new code and try again.",
+        type: "otp_verify",
+      });
       setOtpCode(""); // reset
     } finally {
       setBusy(false);
@@ -222,6 +243,32 @@ function AuthPage() {
         <div className="absolute bottom-1/4 right-1/4 -z-10 h-72 w-72 rounded-full bg-blue-500/5 blur-3xl" />
 
         <div className="w-full max-w-md bg-card/40 border border-border/60 p-8 rounded-3xl backdrop-blur-xl shadow-elevated">
+          {errorState && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="mb-6 rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-left shadow-sm"
+            >
+              <div className="flex gap-3">
+                <AlertCircle className="h-5 w-5 shrink-0 text-destructive mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-sm font-bold text-destructive">{errorState.title}</h3>
+                  <p className="text-xs text-muted-foreground mt-1 leading-relaxed">{errorState.message}</p>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    onClick={() => {
+                      setErrorState(null);
+                      setStep("email");
+                    }} 
+                    className="mt-3.5 h-8 text-[11px] font-bold border-destructive/20 text-destructive hover:bg-destructive/10 cursor-pointer"
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
           <AnimatePresence mode="wait">
             
             {step === "email" && (

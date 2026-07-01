@@ -1,14 +1,15 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
+import { profileService, roleService, sessionService } from "@/lib/auth-service";
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
     // 1. Session Check
-    const { data: sess } = await supabase.auth.getSession();
-    if (!sess.session) {
+    const session = await sessionService.getSession();
+    if (!session) {
       throw redirect({ to: "/auth", search: { redirect: location.pathname } });
     }
-    const uid = sess.session.user.id;
+    const uid = session.user.id;
 
     // Detect if current path is a sub-auth page (MFA verify or MFA enroll)
     const isMfaPage =
@@ -17,30 +18,25 @@ export const Route = createFileRoute("/_authenticated")({
     const isVerifyPrnPage = location.pathname.startsWith("/verify-prn");
 
     // 2. Query Roles and MFA Assurance Levels
-    const [{ data: roles }, { data: mfaInfo }] = await Promise.all([
-      supabase.from("user_roles").select("role").eq("user_id", uid),
+    const [rolesList, mfaInfo] = await Promise.all([
+      roleService.getUserRoles(uid),
       supabase.auth.mfa.getAuthenticatorAssuranceLevel(),
     ]);
 
-    const rolesList = (roles ?? []).map((r) => r.role);
-    const hasAdminRole = rolesList.some((r) =>
-      ["super_admin", "college_admin", "organizer"].includes(r)
-    );
-    const isStaff = rolesList.some((r) =>
-      ["super_admin", "college_admin", "organizer", "scanner"].includes(r)
-    );
+    const hasAdminRole = roleService.isAdmin(rolesList);
+    const isStaff = roleService.isStaff(rolesList);
 
     // 3. MFA Protection Policy
     if (hasAdminRole && !isMfaPage) {
       // Admins MUST verify MFA if enrolled
-      if (mfaInfo?.nextLevel === "aal2" && mfaInfo?.currentLevel === "aal1") {
+      if (mfaInfo?.data?.nextLevel === "aal2" && mfaInfo?.data?.currentLevel === "aal1") {
         throw redirect({ to: "/auth/mfa-verify" });
       }
     }
 
     if (!hasAdminRole && !isMfaPage) {
       // Students/Volunteers: MFA verification is optional but required if enrolled
-      if (mfaInfo?.nextLevel === "aal2" && mfaInfo?.currentLevel === "aal1") {
+      if (mfaInfo?.data?.nextLevel === "aal2" && mfaInfo?.data?.currentLevel === "aal1") {
         throw redirect({ to: "/auth/mfa-verify" });
       }
     }
@@ -52,11 +48,7 @@ export const Route = createFileRoute("/_authenticated")({
     if (isStaff) return;
     if (isVerifyPrnPage) return;
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("verified")
-      .eq("id", uid)
-      .maybeSingle();
+    const profile = await profileService.getProfile(uid);
 
     if (!profile?.verified) {
       throw redirect({ to: "/verify-prn", search: { redirect: location.pathname } as never });

@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { roleService, sessionService } from "@/lib/auth-service";
 import { 
   Ticket, Calendar, User, Phone, BookOpen, Fingerprint, 
   MapPin, CheckCircle, Clock, Sparkles, ChevronRight
@@ -16,9 +17,19 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/student")({
   beforeLoad: async ({ location }) => {
-    const { data: sess } = await supabase.auth.getSession();
-    if (!sess.session) {
+    const session = await sessionService.getSession();
+    if (!session) {
       throw redirect({ to: "/auth", search: { redirect: location.pathname } });
+    }
+    
+    // Redirect admins/staff to their correct portal (Step 9)
+    const rolesList = await roleService.getUserRoles(session.user.id);
+    if (rolesList.includes("super_admin")) {
+      throw redirect({ to: "/super-admin" });
+    } else if (rolesList.includes("college_admin") || rolesList.includes("organizer")) {
+      throw redirect({ to: "/admin" });
+    } else if (rolesList.includes("scanner")) {
+      throw redirect({ to: "/admin/scanner" });
     }
   },
   head: () => ({ meta: [{ title: "Student Portal · FestVerse" }] }),

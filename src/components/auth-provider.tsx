@@ -3,19 +3,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 import { SessionMonitor } from "@/components/auth/session-monitor";
-
-interface Profile {
-  id: string;
-  full_name: string | null;
-  email: string | null;
-  avatar_url: string | null;
-  prn: string | null;
-  department: string | null;
-  phone: string | null;
-  verified: boolean | null;
-  verified_at: string | null;
-  student_id: string | null;
-}
+import { profileService, roleService, sessionService, logDev, type Profile } from "@/lib/auth-service";
 
 interface AuthCtx {
   user: User | null;
@@ -43,54 +31,96 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const loadExtras = async (uid: string) => {
-    const [{ data: p }, { data: r }] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select("id, full_name, email, avatar_url, prn, department, phone, verified, verified_at, student_id")
-        .eq("id", uid)
-        .maybeSingle(),
-      supabase.from("user_roles").select("role").eq("user_id", uid),
-    ]);
-    setProfile((p as Profile) ?? null);
-    setRoles((r ?? []).map((x: { role: string }) => x.role));
+  const loadExtras = async (uid: string, currentUser?: User) => {
+    logDev("Loading extras (Profile & Roles)", { uid });
+    try {
+      // 1. If user is provided, check & create profile if missing (Step 6)
+      if (currentUser) {
+        try {
+          await profileService.createProfileIfMissing(currentUser);
+        } catch (err) {
+          logDev("Non-blocking error during createProfileIfMissing", err);
+        }
+      }
+
+      // 2. Load profile and roles in parallel
+      const [p, r] = await Promise.all([
+        profileService.getProfile(uid),
+        roleService.getUserRoles(uid),
+      ]);
+
+      setProfile(p);
+      setRoles(r);
+      logDev("Profile & Roles Loaded into Auth Context State", { profile: p, roles: r });
+    } catch (err) {
+      logDev("Failed to load extras", err);
+    }
   };
 
   const refresh = async () => {
-    if (session?.user) await loadExtras(session.user.id);
+    logDev("Auth Context Refresh Requested");
+    if (session?.user) {
+      await loadExtras(session.user.id, session.user);
+    }
   };
 
   useEffect(() => {
     let mounted = true;
-    supabase.auth.getSession().then(({ data }) => {
+    logDev("Initializing AuthProvider session...");
+
+    sessionService.getSession().then((s) => {
       if (!mounted) return;
-      setSession(data.session);
-      if (data.session?.user) {
-        loadExtras(data.session.user.id).finally(() => setLoading(false));
-      } else {
-        setLoading(false);
-      }
-    });
-    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
-      if (event !== "SIGNED_IN" && event !== "SIGNED_OUT" && event !== "USER_UPDATED") return;
       setSession(s);
       if (s?.user) {
-        setTimeout(() => loadExtras(s.user.id), 0);
+        logDev("Session detected on init. Loading profile details...");
+        loadExtras(s.user.id, s.user).finally(() => {
+          if (mounted) {
+            setLoading(false);
+            logDev("AuthProvider initialization complete.");
+          }
+        });
       } else {
-        setProfile(null);
-        setRoles([]);
+        setLoading(false);
+        logDev("No active session detected on init.");
       }
     });
+
+    const subscription = sessionService.onSessionChange((event, s) => {
+      if (!mounted) return;
+      
+      if (event === "SIGNED_IN") {
+        logDev("Auth Event: SIGNED_IN. Syncing user details...");
+        setSession(s);
+        if (s?.user) {
+          setLoading(true);
+          loadExtras(s.user.id, s.user).finally(() => {
+            if (mounted) setLoading(false);
+          });
+        }
+      } else if (event === "SIGNED_OUT") {
+        logDev("Auth Event: SIGNED_OUT. Cleaning context state.");
+        setSession(null);
+        setProfile(null);
+        setRoles([]);
+        setLoading(false);
+      } else if (event === "USER_UPDATED") {
+        logDev("Auth Event: USER_UPDATED. Refreshing profile details...");
+        setSession(s);
+        if (s?.user) {
+          loadExtras(s.user.id, s.user).finally(() => {
+            if (mounted) setLoading(false);
+          });
+        }
+      }
+    });
+
     return () => {
       mounted = false;
-      sub.subscription.unsubscribe();
+      subscription.unsubscribe();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const isAdmin = roles.some((r) =>
-    ["super_admin", "college_admin", "organizer", "scanner"].includes(r)
-  );
+  const isAdmin = roleService.isAdmin(roles);
 
   return (
     <Ctx.Provider
