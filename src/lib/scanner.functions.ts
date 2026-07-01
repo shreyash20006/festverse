@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { verifyTicket } from "@/lib/ticket-token.server";
+import { verifyTicket, signTicket } from "@/lib/ticket-token.server";
 
 const ScanSchema = z.object({
   qrToken: z.string().min(10),
@@ -11,6 +11,7 @@ const ScanSchema = z.object({
 /**
  * Validate a scanned QR token and mark attendance.
  * Only callable by admin / organizer / scanner roles.
+ * Verifies HMAC signature and 2-minute expiration window.
  */
 export const scanTicket = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -30,6 +31,24 @@ export const scanTicket = createServerFn({ method: "POST" })
 
     const payload = verifyTicket(data.qrToken);
     if (!payload) return { ok: false, reason: "invalid", message: "Invalid or tampered ticket." };
+
+    // Enforce 120 seconds (2 mins) expiration window to block screenshot reuse
+    const now = Math.floor(Date.now() / 1000);
+    const age = now - payload.iat;
+    if (age > 120) {
+      return { 
+        ok: false, 
+        reason: "expired", 
+        message: "Expired QR Code. Attendee must refresh their live ticket screen." 
+      };
+    }
+    if (age < -60) {
+      return { 
+        ok: false, 
+        reason: "invalid_clock", 
+        message: "Invalid ticket timestamp (Clock out of sync). Check device time." 
+      };
+    }
 
     const { data: ticket } = await supabase
       .from("tickets")
@@ -70,4 +89,42 @@ export const scanTicket = createServerFn({ method: "POST" })
     });
 
     return { ok: true, reason: "checked_in", message: "Check-in successful.", ticket };
+  });
+
+/**
+ * Generate a dynamic time-signed QR token for the ticket page.
+ * Refreshed client-side every 30 seconds.
+ */
+export const getDynamicQrToken = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { ticketId: string }) => z.object({ ticketId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    const { data: ticket, error } = await supabase
+      .from("tickets")
+      .select("id, event_id, user_id")
+      .eq("id", data.ticketId)
+      .maybeSingle();
+
+    if (error || !ticket) {
+      throw new Error("Ticket not found");
+    }
+
+    // Verify ownership or check if scanner/admin
+    if (ticket.user_id !== userId) {
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId);
+      const isStaff = (roles ?? []).some((r) =>
+        ["super_admin", "college_admin", "organizer", "scanner"].includes(r.role)
+      );
+      if (!isStaff) {
+        throw new Error("Access denied: You do not own this ticket.");
+      }
+    }
+
+    const qrToken = signTicket({ tid: ticket.id, eid: ticket.event_id, uid: ticket.user_id });
+    return { qrToken };
   });

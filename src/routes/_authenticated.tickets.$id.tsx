@@ -6,15 +6,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { CategoryBadge } from "@/components/category-badge";
-import { ArrowLeft, Calendar, MapPin, Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft, Calendar, MapPin, ShieldAlert } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { getDynamicQrToken } from "@/lib/scanner.functions";
 
 export const Route = createFileRoute("/_authenticated/tickets/$id")({
   loader: async ({ params }) => {
     const { data, error } = await supabase
       .from("tickets")
       .select(
-        "id, ticket_code, qr_token, status, checked_in_at, issued_at, events(id, title, banner_url, venue, start_at, end_at, category), registrations(full_name, prn, email, teams(id, name, invite_code))"
+        "id, ticket_code, status, checked_in_at, issued_at, events(id, title, banner_url, venue, start_at, end_at, category), registrations(full_name, prn, email, teams(id, name, invite_code))"
       )
       .eq("id", params.id)
       .maybeSingle();
@@ -50,13 +51,49 @@ export const Route = createFileRoute("/_authenticated/tickets/$id")({
 function TicketPage() {
   const { ticket } = Route.useLoaderData() as any;
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [qrUrl, setQrUrl] = useState<string>("");
+  const fetchToken = useServerFn(getDynamicQrToken);
+  
+  const [qrToken, setQrToken] = useState<string>("");
+  const [timeLeft, setTimeLeft] = useState<number>(30);
+  const [offline, setOffline] = useState<boolean>(false);
+
+  const refresh = async () => {
+    try {
+      const res = await fetchToken({ data: { ticketId: ticket.id } });
+      if (res?.qrToken) {
+        setQrToken(res.qrToken);
+        setOffline(false);
+      }
+    } catch (e) {
+      console.error("Failed to fetch dynamic QR token", e);
+      setOffline(true);
+    }
+  };
 
   useEffect(() => {
-    if (!canvasRef.current) return;
-    QRCode.toCanvas(canvasRef.current, ticket.qr_token, { width: 320, margin: 1, color: { dark: "#0F172A", light: "#FFFFFF" } }).catch(() => {});
-    QRCode.toDataURL(ticket.qr_token, { width: 800, margin: 2 }).then(setQrUrl).catch(() => {});
-  }, [ticket.qr_token]);
+    refresh();
+
+    const interval = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          refresh();
+          return 30;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    if (!canvasRef.current || !qrToken) return;
+    QRCode.toCanvas(canvasRef.current, qrToken, {
+      width: 320,
+      margin: 1,
+      color: { dark: "#0F172A", light: "#FFFFFF" },
+    }).catch(() => {});
+  }, [qrToken]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -94,7 +131,13 @@ function TicketPage() {
             </div>
 
             <div className="my-6 grid place-items-center rounded-2xl border border-dashed border-border bg-background p-6">
-              <canvas ref={canvasRef} className="h-[280px] w-[280px]" />
+              {qrToken ? (
+                <canvas ref={canvasRef} className="h-[280px] w-[280px]" />
+              ) : (
+                <div className="h-[280px] w-[280px] flex items-center justify-center text-xs text-muted-foreground">
+                  Securing connection...
+                </div>
+              )}
               {ticket.checked_in_at && (
                 <div className="mt-4 rounded-full bg-success px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-success-foreground">
                   Checked in · {format(new Date(ticket.checked_in_at), "MMM d, h:mm a")}
@@ -142,13 +185,33 @@ function TicketPage() {
               </div>
             )}
 
-            {qrUrl && (
-              <Button asChild variant="outline" className="mt-5 w-full rounded-full">
-                <a href={qrUrl} download={`${ticket.ticket_code}.png`}>
-                  <Download className="mr-2 h-4 w-4" /> Download QR
-                </a>
-              </Button>
-            )}
+            {/* Dynamic Security Indicator */}
+            <div className="mt-5 flex flex-col items-center gap-1.5 rounded-2xl bg-primary/5 border border-primary/10 p-3.5 text-center">
+              <div className="flex items-center gap-2 text-xs font-bold text-primary tracking-wide uppercase">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                </span>
+                Secure Rolling QR Enabled
+              </div>
+              <div className="w-full bg-border/60 rounded-full h-1.5 overflow-hidden mt-1.5">
+                <div 
+                  className="bg-primary h-full transition-all duration-1000 ease-linear"
+                  style={{ width: `${(timeLeft / 30) * 100}%` }}
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground mt-1 leading-normal">
+                {offline ? (
+                  <span className="text-destructive font-semibold inline-flex items-center gap-1">
+                    <ShieldAlert className="h-3 w-3" /> Offline. Displaying last secured QR.
+                  </span>
+                ) : (
+                  <>
+                    Refreshes in <span className="font-semibold text-foreground">{timeLeft}s</span>. Screenshots or printouts will not be accepted at entry.
+                  </>
+                )}
+              </p>
+            </div>
           </div>
         </div>
         <p className="mt-4 text-center text-xs text-muted-foreground">
