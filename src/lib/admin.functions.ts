@@ -20,7 +20,14 @@ async function assertAdmin(supabase: any, userId: string): Promise<string> {
     .limit(1)
     .maybeSingle();
 
-  if (!roleRow) throw new Error("Forbidden: admin access required.");
+  if (!roleRow) {
+    throw new Error("Forbidden: admin access required.");
+  }
+  
+  if (!roleRow.college_id) {
+    throw new Error("No associated college found for your account. Please contact your administrator to assign you to a college.");
+  }
+  
   return roleRow.college_id;
 }
 
@@ -134,7 +141,7 @@ export const createOrUpdateEvent = createServerFn({ method: "POST" })
       evId = ev.id;
     }
 
-    // Save advanced pricing details - use insert for new, update for existing
+    // Save advanced pricing details - use upsert for both new and updates
     const pricingRow = {
       event_id: evId,
       registration_type: data.event.registration_type,
@@ -151,17 +158,16 @@ export const createOrUpdateEvent = createServerFn({ method: "POST" })
     };
 
     try {
-      // Try upsert which works for both insert and update
       const { error: pricingErr } = await context.supabase
         .from("event_pricing")
         .upsert(pricingRow, { onConflict: "event_id" });
       
       if (pricingErr) {
-        console.warn("Pricing save warning (table may not exist yet):", pricingErr.message);
-        // Don't fail the entire operation if pricing table doesn't exist
+        console.warn("Pricing save warning:", pricingErr.message);
+        // Don't fail - pricing table might not exist yet
       }
     } catch (e) {
-      console.warn("Pricing save error (table may not exist yet):", e);
+      console.warn("Pricing save error (table may not exist):", e);
       // Continue - pricing is optional
     }
 
