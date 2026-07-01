@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Ticket, Search, LayoutDashboard, User, LogIn, Menu } from "lucide-react";
+import { Ticket, Search, LayoutDashboard, User, LogIn, Menu, Plus, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,17 +13,38 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/components/auth-provider";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { createCollegeTenant } from "@/lib/admin.functions";
 
-const navItems = [
-  { to: "/", label: "Home", icon: LayoutDashboard },
-  { to: "/events", label: "Events", icon: Search },
-  { to: "/my-tickets", label: "My Tickets", icon: Ticket, auth: true },
+const publicNavItems = [
+  { to: "/", label: "Home" },
+  { to: "/events", label: "Events" },
+  { to: "/colleges", label: "Colleges" },
+  { to: "/pricing", label: "Pricing" },
+  { to: "/about", label: "About" },
+  { to: "/contact", label: "Contact" },
+  { to: "/faq", label: "FAQ" },
 ];
 
 export function SiteHeader() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const { user, profile, isAdmin } = useAuth();
+  const { user, profile, roles, isAdmin } = useAuth();
   const [scrolled, setScrolled] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Super Admin Create College Dialog State
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [colName, setColName] = useState("");
+  const [colSlug, setColSlug] = useState("");
+  const [busy, setBusy] = useState(false);
+  const submitCollege = useServerFn(createCollegeTenant);
+
+  const isSuperAdmin = roles.includes("super_admin");
+
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 8);
     h();
@@ -31,9 +52,28 @@ export function SiteHeader() {
     return () => window.removeEventListener("scroll", h);
   }, []);
 
+  const handleCreateCollege = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      const res = await submitCollege({ data: { name: colName, slug: colSlug.toLowerCase().trim() } });
+      if (res?.ok) {
+        toast.success(`Success! Registered college ${colName}`);
+        setDialogOpen(false);
+        setColName("");
+        setColSlug("");
+        window.location.href = `/c/${res.slug}`;
+      }
+    } catch (err: any) {
+      toast.error(err?.message ?? "Failed to create college tenant");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <header
-      className={`sticky top-0 z-50 w-full transition-all duration-350 ${
+      className={`sticky top-0 z-50 w-full transition-all duration-300 ${
         scrolled
           ? "border-b border-border/80 bg-background/70 backdrop-blur-md shadow-sm"
           : "bg-transparent"
@@ -41,7 +81,8 @@ export function SiteHeader() {
     >
       <div className="container mx-auto flex h-16 items-center justify-between gap-2 px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-1">
-          <Sheet>
+          {/* Mobile Sheet Nav */}
+          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
             <SheetTrigger asChild>
               <button
                 aria-label="Open menu"
@@ -62,35 +103,50 @@ export function SiteHeader() {
                 </div>
               </div>
               <nav className="flex flex-col gap-1.5 p-4">
-                {navItems.map((it) => {
-                  if (it.auth && !user) return null;
+                {publicNavItems.map((it) => {
                   const active = it.to === "/" ? pathname === "/" : pathname.startsWith(it.to);
-                  const Icon = it.icon;
                   return (
                     <Link
                       key={it.to}
                       to={it.to}
+                      onClick={() => setMobileOpen(false)}
                       className={`flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium transition-all ${
                         active
                           ? "bg-gradient-brand-soft text-primary shadow-sm"
                           : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                       }`}
                     >
-                      <Icon className="h-4 w-4" />
                       {it.label}
                     </Link>
                   );
                 })}
-                <Link
-                  to="/admin"
-                  className="flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium text-muted-foreground transition-all hover:bg-muted/60 hover:text-foreground"
-                >
-                  <LayoutDashboard className="h-4 w-4" /> Admin
-                </Link>
+
+                {user && (
+                  <Link
+                    to="/my-tickets"
+                    onClick={() => setMobileOpen(false)}
+                    className="flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium text-muted-foreground transition-all hover:bg-muted/60 hover:text-foreground"
+                  >
+                    My Tickets
+                  </Link>
+                )}
+
+                {isSuperAdmin && (
+                  <button
+                    onClick={() => {
+                      setMobileOpen(false);
+                      setDialogOpen(true);
+                    }}
+                    className="flex items-center gap-3 text-left w-full rounded-xl px-3.5 py-3 text-sm font-semibold text-blue-600 dark:text-blue-400 transition-all hover:bg-blue-50 dark:hover:bg-blue-950/20"
+                  >
+                    <Plus className="h-4 w-4" /> Create College
+                  </button>
+                )}
               </nav>
             </SheetContent>
           </Sheet>
- 
+
+          {/* Logo */}
           <Link to="/" className="flex min-w-0 items-center gap-2.5 group">
             <div className="relative overflow-hidden rounded-xl transition-all duration-300 group-hover:scale-105 active:scale-95">
               <img
@@ -106,17 +162,17 @@ export function SiteHeader() {
             </div>
           </Link>
         </div>
- 
+
+        {/* Desktop Navigation */}
         <nav className="hidden items-center gap-1.5 md:flex">
-          {navItems.map((it) => {
-            if (it.auth && !user) return null;
+          {publicNavItems.map((it) => {
             const active =
               it.to === "/" ? pathname === "/" : pathname.startsWith(it.to);
             return (
               <Link
                 key={it.to}
                 to={it.to}
-                className={`rounded-full px-4 py-1.5 text-xs font-semibold tracking-wide uppercase transition-all duration-200 cursor-pointer ${
+                className={`rounded-full px-3.5 py-1.5 text-[11px] font-bold tracking-wide uppercase transition-all duration-200 cursor-pointer ${
                   active
                     ? "bg-primary/10 text-primary border border-primary/20"
                     : "text-muted-foreground border border-transparent hover:bg-muted/50 hover:text-foreground"
@@ -126,14 +182,18 @@ export function SiteHeader() {
               </Link>
             );
           })}
-          <Link
-            to="/admin"
-            className="rounded-full px-4 py-1.5 text-xs font-semibold tracking-wide uppercase transition-all duration-200 cursor-pointer text-muted-foreground border border-transparent hover:bg-muted/50 hover:text-foreground"
-          >
-            Admin
-          </Link>
+
+          {isSuperAdmin && (
+            <button
+              onClick={() => setDialogOpen(true)}
+              className="rounded-full px-3.5 py-1.5 text-[11px] font-bold tracking-wide uppercase transition-all duration-200 cursor-pointer text-blue-600 dark:text-blue-400 border border-blue-500/20 bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100 dark:hover:bg-blue-950/40 flex items-center gap-1"
+            >
+              <Plus className="h-3 w-3" /> Create College
+            </button>
+          )}
         </nav>
- 
+
+        {/* Auth / Account Trigger */}
         <div className="flex items-center gap-2">
           {user ? (
             <DropdownMenu>
@@ -156,16 +216,22 @@ export function SiteHeader() {
                   <div className="text-[10px] text-muted-foreground truncate mt-0.5">{user.email}</div>
                 </div>
                 <DropdownMenuSeparator />
+                
+                {/* Student Dashboard Route */}
+                <DropdownMenuItem asChild className="rounded-xl mx-1.5 focus:bg-muted/80">
+                  <Link to="/student" className="cursor-pointer text-xs font-medium">
+                    <User className="mr-2 h-4 w-4 text-muted-foreground" /> Student Portal
+                  </Link>
+                </DropdownMenuItem>
+
+                {/* My Tickets */}
                 <DropdownMenuItem asChild className="rounded-xl mx-1.5 focus:bg-muted/80">
                   <Link to="/my-tickets" className="cursor-pointer text-xs font-medium">
                     <Ticket className="mr-2 h-4 w-4 text-muted-foreground" /> My Tickets
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild className="rounded-xl mx-1.5 focus:bg-muted/80">
-                  <Link to="/profile" className="cursor-pointer text-xs font-medium">
-                    <User className="mr-2 h-4 w-4 text-muted-foreground" /> Profile
-                  </Link>
-                </DropdownMenuItem>
+
+                {/* Admin Dashboard */}
                 {isAdmin && (
                   <DropdownMenuItem asChild className="rounded-xl mx-1.5 focus:bg-muted/80">
                     <Link to="/admin" className="cursor-pointer text-xs font-medium">
@@ -173,6 +239,16 @@ export function SiteHeader() {
                     </Link>
                   </DropdownMenuItem>
                 )}
+
+                {/* Super Admin Dashboard */}
+                {isSuperAdmin && (
+                  <DropdownMenuItem asChild className="rounded-xl mx-1.5 focus:bg-muted/80">
+                    <Link to="/super-admin" className="cursor-pointer text-xs font-medium">
+                      <Building2 className="mr-2 h-4 w-4 text-muted-foreground" /> Platform Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onSelect={async () => {
@@ -194,6 +270,48 @@ export function SiteHeader() {
           )}
         </div>
       </div>
+
+      {/* Super Admin Create College Modal */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="rounded-3xl border border-border/80 bg-card/95 backdrop-blur-md max-w-md shadow-elevated">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold tracking-tight">Launch College Tenant</DialogTitle>
+            <DialogDescription className="text-xs">
+              Instantiate a branded event portal for a new college.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCreateCollege} className="space-y-4 mt-2">
+            <div className="space-y-1">
+              <Label htmlFor="c-name" className="text-xs font-semibold">College Name</Label>
+              <Input
+                id="c-name"
+                value={colName}
+                onChange={(e) => setColName(e.target.value)}
+                placeholder="e.g. Harvard University"
+                required
+                className="rounded-xl h-10 border-border/85"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="c-slug" className="text-xs font-semibold">URL Subdomain Slug</Label>
+              <div className="flex items-center gap-1.5">
+                <Input
+                  id="c-slug"
+                  value={colSlug}
+                  onChange={(e) => setColSlug(e.target.value.replace(/[^a-zA-Z0-9-]/g, ""))}
+                  placeholder="e.g. harvard"
+                  required
+                  className="rounded-xl h-10 border-border/85 text-right font-mono"
+                />
+                <span className="text-xs text-muted-foreground font-mono">.campusconnect.app</span>
+              </div>
+            </div>
+            <Button type="submit" disabled={busy} className="w-full rounded-full bg-gradient-brand text-white mt-4 h-10 font-bold active:scale-98">
+              {busy ? "Provisioning..." : "Launch Tenant Portal"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </header>
   );
 }
