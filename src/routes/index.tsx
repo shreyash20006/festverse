@@ -9,7 +9,7 @@ import {
   ArrowRight, Calendar, QrCode, Shield, Sparkles, Ticket, Trophy, 
   Building2, Plus, ArrowUpRight, GraduationCap, Coins, Activity, Check,
   Users, CheckCircle2, XCircle, Star, LifeBuoy, ArrowRightLeft, ShieldCheck,
-  Megaphone, Phone, Mail, HelpCircle, MapPin
+  Megaphone, Phone, Mail, HelpCircle, MapPin, HandHelping
 } from "lucide-react";
 import { useTenant } from "@/components/tenant-provider";
 import { useAuth } from "@/components/auth-provider";
