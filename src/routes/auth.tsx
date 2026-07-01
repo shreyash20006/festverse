@@ -131,6 +131,15 @@ function AuthPage() {
             <GoogleIcon className="mr-2 h-4 w-4" /> Continue with Google
           </Button>
 
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => window.location.href = "/admin"}
+            className="mt-2.5 h-11 w-full rounded-full font-bold text-primary hover:bg-primary/10 border border-dashed border-primary/40 cursor-pointer"
+          >
+            ⚡ Bypass Sign-in & Open Admin Portal
+          </Button>
+
           <div className="my-6 flex items-center gap-3">
             <div className="h-px flex-1 bg-border" />
             <span className="text-xs uppercase tracking-wider text-muted-foreground">or</span>

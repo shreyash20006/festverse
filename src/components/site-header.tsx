@@ -81,14 +81,12 @@ export function SiteHeader() {
                     </Link>
                   );
                 })}
-                {isAdmin && (
-                  <Link
-                    to="/admin"
-                    className="flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium text-muted-foreground transition-all hover:bg-muted/60 hover:text-foreground"
-                  >
-                    <LayoutDashboard className="h-4 w-4" /> Admin
-                  </Link>
-                )}
+                <Link
+                  to="/admin"
+                  className="flex items-center gap-3 rounded-xl px-3.5 py-3 text-sm font-medium text-muted-foreground transition-all hover:bg-muted/60 hover:text-foreground"
+                >
+                  <LayoutDashboard className="h-4 w-4" /> Admin
+                </Link>
               </nav>
             </SheetContent>
           </Sheet>
@@ -128,6 +126,12 @@ export function SiteHeader() {
               </Link>
             );
           })}
+          <Link
+            to="/admin"
+            className="rounded-full px-4 py-1.5 text-xs font-semibold tracking-wide uppercase transition-all duration-200 cursor-pointer text-muted-foreground border border-transparent hover:bg-muted/50 hover:text-foreground"
+          >
+            Admin
+          </Link>
         </nav>
  
         <div className="flex items-center gap-2">
