@@ -14,6 +14,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/components/auth-provider";
 import { TenantProvider } from "@/components/tenant-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { BRAND } from "@/lib/brand";
 
 
 function NotFoundComponent() {
@@ -86,8 +87,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: `${BRAND.appName} — ${BRAND.tagline}` },
       { name: "twitter:description", content: BRAND.metaDescription },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/baf6d106-b49f-416f-bd3b-db984a5b0ca1/id-preview-89ce7cb7--bcea13ef-0a67-4379-9ac1-372bd8c2ce23.lovable.app-1782805063644.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/baf6d106-b49f-416f-bd3b-db984a5b0ca1/id-preview-89ce7cb7--bcea13ef-0a67-4379-9ac1-372bd8c2ce23.lovable.app-1782805063644.png" },
+      {
+        property: "og:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/baf6d106-b49f-416f-bd3b-db984a5b0ca1/id-preview-89ce7cb7--bcea13ef-0a67-4379-9ac1-372bd8c2ce23.lovable.app-1782805063644.png",
+      },
+      {
+        name: "twitter:image",
+        content:
+          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/baf6d106-b49f-416f-bd3b-db984a5b0ca1/id-preview-89ce7cb7--bcea13ef-0a67-4379-9ac1-372bd8c2ce23.lovable.app-1782805063644.png",
+      },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
