@@ -153,7 +153,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { dark, toggle } = useTheme();
   
-  const { roles } = useAuth();
+  const { roles, user } = useAuth();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
@@ -164,15 +164,28 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
     }
   }, [roles, pathname]);
 
+  // ✅ OPTIMIZED: Use profile from auth context + staleTime to avoid refetches
   const { data: me } = useQuery({
-    queryKey: ["admin", "me"],
+    queryKey: ["admin", "me", user?.id],
     queryFn: async () => {
-      const { data: sess } = await supabase.auth.getSession();
-      const u = sess.session?.user;
-      if (!u) return null;
-      const { data: p } = await supabase.from("profiles").select("full_name, avatar_url, email").eq("id", u.id).maybeSingle();
-      return { email: u.email, ...p };
+      // Skip if no user
+      if (!user) return null;
+      
+      const { data: p } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url, email")
+        .eq("id", user.id)
+        .maybeSingle();
+      
+      return {
+        email: user.email,
+        full_name: p?.full_name,
+        avatar_url: p?.avatar_url,
+      };
     },
+    enabled: !!user, // ✅ Don't query if no user
+    staleTime: 1000 * 60 * 10, // ✅ Cache for 10 minutes
+    gcTime: 1000 * 60 * 30, // ✅ Keep in memory for 30 minutes
   });
 
   const initials = (me?.full_name || me?.email || "A").slice(0, 2).toUpperCase();
@@ -232,7 +245,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           {/* Global search */}
           <button
             onClick={() => setPaletteOpen(true)}
-            className="group flex h-9 max-w-md flex-1 items-center gap-2 rounded-xl border border-border bg-background/60 px-3 text-sm text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+            className="group flex h-9 max-w-md flex-1 items-center gap-2 rounded-xl border border-border bg-background/60 px-3 text-sm text-muted-foreground transition-colors hover:bg-background"
           >
             <Search className="h-4 w-4" />
             <span className="hidden truncate sm:inline">Search or jump to…</span>
