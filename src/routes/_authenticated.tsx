@@ -32,10 +32,6 @@ export const Route = createFileRoute("/_authenticated")({
 
     // 3. MFA Protection Policy
     if (hasAdminRole && !isMfaPage) {
-      // Admins MUST enroll in MFA
-      if (mfaInfo?.nextLevel === "aal1") {
-        throw redirect({ to: "/auth/mfa-enroll" });
-      }
       // Admins MUST verify MFA if enrolled
       if (mfaInfo?.nextLevel === "aal2" && mfaInfo?.currentLevel === "aal1") {
         throw redirect({ to: "/auth/mfa-verify" });

@@ -152,10 +152,6 @@ function AuthPage() {
 
         // Redirect policy matching layout check
         if (hasAdminRole) {
-          if (mfaInfo?.nextLevel === "aal1") {
-            navigate({ to: "/auth/mfa-enroll" });
-            return;
-          }
           if (mfaInfo?.nextLevel === "aal2" && mfaInfo?.currentLevel === "aal1") {
             navigate({ to: "/auth/mfa-verify" });
             return;
