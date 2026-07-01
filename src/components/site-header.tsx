@@ -21,6 +21,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { createCollegeTenant } from "@/lib/admin.functions";
 import { BRAND } from "@/lib/brand";
 import { Logo } from "@/components/brand-logo";
+import { useTenant } from "@/components/tenant-provider";
 
 const publicNavItems = [
   { to: "/", label: "Home" },
@@ -35,6 +36,7 @@ const publicNavItems = [
 export function SiteHeader() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { user, profile, roles, isAdmin } = useAuth();
+  const { branding, isRoot } = useTenant();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -95,7 +97,11 @@ export function SiteHeader() {
             </SheetTrigger>
             <SheetContent side="left" className="w-72 p-0 border-r border-border/80 bg-card/95 backdrop-blur-lg">
               <div className="flex items-center gap-3 border-b border-border/60 px-5 py-4">
-                <Logo size="md" />
+                {branding.logoUrl && !isRoot ? (
+                  <img src={branding.logoUrl} alt={branding.name ?? BRAND.appName} className="h-9 w-auto max-w-[120px] object-contain" />
+                ) : (
+                  <Logo size="md" />
+                )}
               </div>
               <nav className="flex flex-col gap-1.5 p-4">
                 {publicNavItems.map((it) => {
@@ -143,7 +149,15 @@ export function SiteHeader() {
 
           {/* Logo */}
           <Link to="/" className="flex min-w-0 items-center gap-2.5 group">
-            <Logo size="md" />
+            {branding.logoUrl && !isRoot ? (
+              <img
+                src={branding.logoUrl}
+                alt={branding.name ?? BRAND.appName}
+                className="h-9 w-auto max-w-[160px] object-contain"
+              />
+            ) : (
+              <Logo size="md" />
+            )}
           </Link>
         </div>
 

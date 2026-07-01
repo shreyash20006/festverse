@@ -1,9 +1,18 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-interface CollegeBranding {
+export interface CollegeBranding {
   primaryColor: string;
   logoUrl: string | null;
+  faviconUrl: string | null;
+  headerMediaUrl: string | null;
+  headerMediaType: "image" | "video";
+  footerMediaUrl: string | null;
+  footerMediaType: "image" | "video";
+  ogImageUrl: string | null;
+  tagline: string | null;
+  shortName: string | null;
+  name: string | null;
 }
 
 interface TenantCtx {
@@ -14,12 +23,26 @@ interface TenantCtx {
   branding: CollegeBranding;
 }
 
+const DEFAULT_BRANDING: CollegeBranding = {
+  primaryColor: "#6D28D9",
+  logoUrl: null,
+  faviconUrl: null,
+  headerMediaUrl: null,
+  headerMediaType: "image",
+  footerMediaUrl: null,
+  footerMediaType: "image",
+  ogImageUrl: null,
+  tagline: null,
+  shortName: null,
+  name: null,
+};
+
 const Ctx = createContext<TenantCtx>({
   college: null,
   collegeId: null,
   isRoot: true,
   loading: true,
-  branding: { primaryColor: "#FF5A5F", logoUrl: null },
+  branding: DEFAULT_BRANDING,
 });
 
 export function getTenantFromUrl(): { type: 'subdomain' | 'path' | 'root'; slug: string | null } {
@@ -54,10 +77,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     const resolveTenant = async () => {
       const tenant = getTenantFromUrl();
       if (!tenant.slug) {
-        if (active) {
-          setIsRoot(true);
-          setLoading(false);
-        }
+        if (active) { setIsRoot(true); setLoading(false); }
         return;
       }
 
@@ -74,18 +94,13 @@ export function TenantProvider({ children }: { children: ReactNode }) {
             setCollege(data);
             setIsRoot(false);
           } else {
-            // Fallback to first available college or default to help development flow
             const { data: fallback } = await supabase
               .from("colleges")
               .select("*")
               .eq("slug", "tgpcop")
               .maybeSingle();
-            if (fallback) {
-              setCollege(fallback);
-              setIsRoot(false);
-            } else {
-              setIsRoot(true);
-            }
+            if (fallback) { setCollege(fallback); setIsRoot(false); }
+            else setIsRoot(true);
           }
         }
       } catch (err) {
@@ -99,28 +114,60 @@ export function TenantProvider({ children }: { children: ReactNode }) {
     return () => { active = false; };
   }, []);
 
-  // Configure dynamic theme color in document style
+  // Apply dynamic brand color to CSS custom properties
   useEffect(() => {
     if (college?.primary_color) {
       document.documentElement.style.setProperty("--primary", college.primary_color);
     }
   }, [college]);
 
+  // Inject dynamic favicon when college has one
+  useEffect(() => {
+    if (!college?.favicon_url) return;
+
+    const existing = document.querySelector("link[rel*='icon']");
+    if (existing) {
+      (existing as HTMLLinkElement).href = college.favicon_url;
+    } else {
+      const link = document.createElement("link");
+      link.rel = "icon";
+      link.type = "image/x-icon";
+      link.href = college.favicon_url;
+      document.head.appendChild(link);
+    }
+
+    // Also set apple-touch-icon
+    const appleLink = document.querySelector("link[rel='apple-touch-icon']") as HTMLLinkElement | null;
+    if (appleLink) appleLink.href = college.favicon_url;
+  }, [college?.favicon_url]);
+
+  // Inject dynamic document title when college has a name
+  useEffect(() => {
+    if (college?.name) {
+      const base = college.short_name || college.name;
+      // Only set if current title doesn't include the college name yet
+      if (!document.title.includes(base)) {
+        document.title = document.title.replace("FestVerse", `${base} | FestVerse`);
+      }
+    }
+  }, [college?.name]);
+
   const branding: CollegeBranding = {
-    primaryColor: college?.primary_color ?? "#FF5A5F",
-    logoUrl: college?.logo_url ?? "https://res.cloudinary.com/dsqxboxoc/image/upload/v1782801547/campus_logo_oj2pcn.png",
+    primaryColor: college?.primary_color ?? "#6D28D9",
+    logoUrl: college?.logo_url ?? null,
+    faviconUrl: college?.favicon_url ?? null,
+    headerMediaUrl: college?.header_media_url ?? null,
+    headerMediaType: (college?.header_media_type as "image" | "video") ?? "image",
+    footerMediaUrl: college?.footer_media_url ?? null,
+    footerMediaType: (college?.footer_media_type as "image" | "video") ?? "image",
+    ogImageUrl: college?.og_image_url ?? null,
+    tagline: college?.tagline ?? null,
+    shortName: college?.short_name ?? null,
+    name: college?.name ?? null,
   };
 
   return (
-    <Ctx.Provider
-      value={{
-        college,
-        collegeId: college?.id ?? null,
-        isRoot,
-        loading,
-        branding,
-      }}
-    >
+    <Ctx.Provider value={{ college, collegeId: college?.id ?? null, isRoot, loading, branding }}>
       {loading ? (
         <div className="flex min-h-screen items-center justify-center bg-background">
           <div className="text-center">
@@ -130,9 +177,7 @@ export function TenantProvider({ children }: { children: ReactNode }) {
             </p>
           </div>
         </div>
-      ) : (
-        children
-      )}
+      ) : children}
     </Ctx.Provider>
   );
 }
