@@ -10,7 +10,7 @@ export function SiteFooter() {
         <div className="md:col-span-1 space-y-4">
           <Logo size="md" />
           <p className="max-w-sm text-xs leading-relaxed text-muted-foreground">
-            {BRAND.appName} is the ultimate university event management platform. We automate ticketing, payments, check-ins, and certificate distribution so you can focus on building experiences.
+            {BRAND.appName} is the official event management platform for TGPCOP. We automate ticketing, payments, check-ins, and certificate distribution so students can easily discover and participate in campus activities.
           </p>
           <div className="flex items-center gap-3 pt-2">
             <a
@@ -38,16 +38,6 @@ export function SiteFooter() {
             <li>
               <Link to="/events" className="hover:text-primary transition-colors">
                 Explore Events
-              </Link>
-            </li>
-            <li>
-              <Link to="/colleges" className="hover:text-primary transition-colors">
-                Browse Colleges
-              </Link>
-            </li>
-            <li>
-              <Link to="/pricing" className="hover:text-primary transition-colors">
-                Pricing Plans
               </Link>
             </li>
             <li>

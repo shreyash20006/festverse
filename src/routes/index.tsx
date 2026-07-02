@@ -92,24 +92,22 @@ function HomePage() {
           <div className="mx-auto max-w-3xl text-center">
             <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur">
               <Sparkles className="h-3 w-3 text-primary animate-pulse" />
-              The official events platform for {college?.name ?? "your college"}
+              Official Event Management Platform
             </div>
             <h1 className="mt-6 font-display text-4xl font-black tracking-tight text-balance text-foreground sm:text-6xl lg:text-7xl">
-              Every event on campus.{" "}
-              <span className="bg-gradient-brand bg-clip-text text-transparent">One ticket.</span>
+              TGPCOP Student Events
             </h1>
             <p className="mx-auto mt-5 max-w-xl text-sm sm:text-base text-muted-foreground leading-relaxed">
-              Discover workshops, cultural fests, technical events and more at {college?.name ?? "your college"}.
-              Register in 30 seconds, get a secure QR ticket, and earn certificates after attendance.
+              Register for Workshops, Seminars, Sports, Cultural Events and College Festivals.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Button asChild size="lg" className="rounded-full bg-gradient-brand px-7 text-white shadow-glow hover:opacity-90 cursor-pointer font-bold">
                 <Link to="/events">
-                  Browse events <ArrowRight className="ml-2 h-4 w-4" />
+                  Explore Events <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
               <Button asChild size="lg" variant="outline" className="rounded-full cursor-pointer font-semibold">
-                <Link to="/auth">Get started — it's free</Link>
+                <Link to="/auth">Sign In</Link>
               </Button>
             </div>
           </div>

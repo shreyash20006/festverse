@@ -56,7 +56,6 @@ const NAV = [
   { to: "/admin/reports", label: "Reports", icon: FileBarChart },
   { to: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { to: "/admin/settings", label: "Settings", icon: Settings, exact: true },
-  { to: "/admin/settings/payments", label: "Payment Settings", icon: Settings },
   { to: "/admin/support", label: "Support", icon: LifeBuoy },
   { to: "/admin/audit", label: "Audit Logs", icon: ScrollText },
 ];

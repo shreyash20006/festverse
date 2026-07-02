@@ -24,11 +24,23 @@ async function assertAdmin(supabase: any, userId: string): Promise<string> {
     throw new Error("Forbidden: admin access required.");
   }
   
-  if (!roleRow.college_id) {
+  let collegeId = roleRow.college_id;
+  if (!collegeId) {
+    const { data: col } = await supabase
+      .from("colleges")
+      .select("id")
+      .eq("slug", "tgpcop")
+      .maybeSingle();
+    if (col) {
+      collegeId = col.id;
+    }
+  }
+
+  if (!collegeId) {
     throw new Error("No associated college found for your account. Please contact your administrator to assign you to a college.");
   }
   
-  return roleRow.college_id;
+  return collegeId;
 }
 
 async function assertSuperAdmin(supabase: any, userId: string): Promise<boolean> {

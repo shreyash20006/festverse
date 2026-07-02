@@ -59,11 +59,16 @@ function VerifyPrnPage() {
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!prn.trim()) return;
+    if (!prn.trim() || !user) return;
     setStatus("checking");
     try {
-      const r = await verify({ data: { prn: prn.trim() } });
-      if (r.ok) {
+      const { data: r, error } = await supabase.rpc("verify_and_link_prn", {
+        _user_id: user.id,
+        _prn: prn.trim()
+      });
+      if (error) throw error;
+      const res = r as any;
+      if (res?.ok) {
         setStatus("success");
         await refresh();
         setTimeout(() => {
@@ -72,8 +77,8 @@ function VerifyPrnPage() {
         }, 900);
         return;
       }
-      if (r.reason === "taken") setStatus("taken");
-      else if (r.reason === "not_found") setStatus("not_found");
+      if (res?.reason === "taken") setStatus("taken");
+      else if (res?.reason === "not_found") setStatus("not_found");
       else setStatus("error");
     } catch {
       setStatus("error");
