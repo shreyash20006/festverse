@@ -15,6 +15,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { BRAND } from "@/lib/brand";
+import { useServerFn } from "@tanstack/react-start";
+import { createCollegeTenant } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/super-admin")({
   beforeLoad: async ({ location }) => {
@@ -37,6 +39,7 @@ export const Route = createFileRoute("/_authenticated/super-admin")({
 
 function SuperAdminDashboard() {
   const qc = useQueryClient();
+  const doCreateCollege = useServerFn(createCollegeTenant);
   const [activeTab, setActiveTab] = useState<"colleges" | "subscriptions" | "logs">("colleges");
   const [colName, setColName] = useState("");
   const [colSlug, setColSlug] = useState("");
@@ -151,37 +154,28 @@ function SuperAdminDashboard() {
     }
   };
 
-  // Create College
+  // Create College — uses server function (supabaseAdmin) to bypass RLS
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
     try {
-      const { data: existing } = await supabase.from("colleges").select("id").eq("slug", colSlug).maybeSingle();
-      if (existing) throw new Error("Slug is already taken.");
+      // Step 1: create via server fn (handles RLS, seeds subscription + role)
+      const result = await doCreateCollege({
+        data: { name: colName, slug: colSlug.toLowerCase().trim() },
+      });
 
-      const { data: col, error } = await supabase
-        .from("colleges")
-        .insert({
-          name: colName,
-          slug: colSlug.toLowerCase().trim(),
+      // Step 2: patch extra branding fields if provided (admin client would be ideal,
+      // but here we rely on the "Super admins manage colleges" RLS policy we added)
+      if (result?.collegeId && (colShortName || colLogoUrl || colColor || colEmail || colPhone || colAddress)) {
+        await supabase.from("colleges").update({
           short_name: colShortName || null,
           logo_url: colLogoUrl || null,
           primary_color: colColor || null,
           contact_email: colEmail || null,
           contact_phone: colPhone || null,
           address: colAddress || null,
-          is_active: true,
-        })
-        .select("id")
-        .single();
-      if (error) throw error;
-
-      // Seed default subscription
-      await supabase.from("subscriptions").insert({
-        college_id: col.id,
-        plan_name: "free",
-        status: "active",
-      });
+        }).eq("id", result.collegeId);
+      }
 
       toast.success("College portal created successfully!");
       setDialogOpen(false);

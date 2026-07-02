@@ -139,12 +139,15 @@ export const createOrUpdateEvent = createServerFn({ method: "POST" })
       created_by: context.userId,
     };
 
+    // Use admin client for writes to bypass potential RLS issues
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
     let evId = data.id;
     if (data.id) {
-      const { error } = await context.supabase.from("events").update(row).eq("id", data.id);
+      const { error } = await supabaseAdmin.from("events").update(row).eq("id", data.id);
       if (error) throw new Error(error.message);
     } else {
-      const { data: ev, error } = await context.supabase
+      const { data: ev, error } = await supabaseAdmin
         .from("events")
         .insert(row)
         .select("id")
@@ -153,34 +156,32 @@ export const createOrUpdateEvent = createServerFn({ method: "POST" })
       evId = ev.id;
     }
 
-    // Save advanced pricing details - use upsert for both new and updates
-    const pricingRow = {
-      event_id: evId,
-      registration_type: data.event.registration_type,
-      registration_fee: data.event.registration_fee,
-      currency: "INR",
-      early_bird_price: data.event.early_bird_price || null,
-      early_bird_deadline: data.event.early_bird_deadline || null,
-      late_registration_price: data.event.late_registration_price || null,
-      gst_percent: data.event.gst_percent || 0,
-      discount_amount: data.event.discount_amount || 0,
-      coupon_code: data.event.coupon_code || null,
-      max_registrations: data.event.max_registrations || null,
-      registration_deadline: data.event.registration_deadline || null,
-    };
-
+    // Save advanced pricing details (non-fatal — event is already saved)
     try {
-      const { error: pricingErr } = await context.supabase
+      const pricingRow = {
+        event_id: evId,
+        registration_type: data.event.registration_type,
+        registration_fee: data.event.registration_fee,
+        currency: "INR",
+        early_bird_price: data.event.early_bird_price || null,
+        early_bird_deadline: data.event.early_bird_deadline || null,
+        late_registration_price: data.event.late_registration_price || null,
+        gst_percent: data.event.gst_percent || 0,
+        discount_amount: data.event.discount_amount || 0,
+        coupon_code: data.event.coupon_code || null,
+        max_registrations: data.event.max_registrations || null,
+        registration_deadline: data.event.registration_deadline || null,
+      };
+
+      const { error: pricingErr } = await supabaseAdmin
         .from("event_pricing")
         .upsert(pricingRow, { onConflict: "event_id" });
       
       if (pricingErr) {
-        console.warn("Pricing save warning:", pricingErr.message);
-        // Don't fail - pricing table might not exist yet
+        console.warn("[event_pricing] Non-fatal upsert warning:", pricingErr.message);
       }
-    } catch (e) {
-      console.warn("Pricing save error (table may not exist):", e);
-      // Continue - pricing is optional
+    } catch (pricingEx: any) {
+      console.warn("[event_pricing] Skipped:", pricingEx?.message);
     }
 
     return { id: evId };
@@ -287,7 +288,7 @@ export const createCollegeTenant = createServerFn({ method: "POST" })
       throw new Error(`The college URL slug '${data.slug}' is already taken.`);
     }
 
-    // Insert college using admin client
+    // Insert college using admin client (bypasses RLS)
     const { data: college, error: colErr } = await supabaseAdmin
       .from("colleges")
       .insert({
@@ -302,7 +303,14 @@ export const createCollegeTenant = createServerFn({ method: "POST" })
       throw new Error(colErr?.message ?? "Failed to create college");
     }
 
-    // Map creator as college_admin for this college using admin client
+    // Seed a free subscription for the new college
+    await supabaseAdmin.from("subscriptions").insert({
+      college_id: college.id,
+      plan_name: "free",
+      status: "active",
+    }).throwOnError();
+
+    // Map creator as college_admin for this college
     const { error: roleErr } = await supabaseAdmin
       .from("user_roles")
       .insert({

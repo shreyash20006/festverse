@@ -9,8 +9,11 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as CookiesRouteImport } from './routes/cookies'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CollegesRouteImport } from './routes/colleges'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -48,6 +51,16 @@ import { Route as AuthenticatedAdminSettingsPaymentsRouteImport } from './routes
 import { Route as AuthenticatedAdminEventsNewRouteImport } from './routes/_authenticated.admin.events.new'
 import { Route as AuthenticatedAdminEventsIdEditRouteImport } from './routes/_authenticated.admin.events.$id.edit'
 
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
@@ -56,6 +69,11 @@ const PricingRoute = PricingRouteImport.update({
 const FaqRoute = FaqRouteImport.update({
   id: '/faq',
   path: '/faq',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CookiesRoute = CookiesRouteImport.update({
+  id: '/cookies',
+  path: '/cookies',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContactRoute = ContactRouteImport.update({
@@ -262,8 +280,11 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/colleges': typeof CollegesRoute
   '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
   '/faq': typeof FaqRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/my-tickets': typeof AuthenticatedMyTicketsRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -301,8 +322,11 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/colleges': typeof CollegesRoute
   '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
   '/faq': typeof FaqRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/my-tickets': typeof AuthenticatedMyTicketsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/student': typeof AuthenticatedStudentRoute
@@ -341,8 +365,11 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/colleges': typeof CollegesRoute
   '/contact': typeof ContactRoute
+  '/cookies': typeof CookiesRoute
   '/faq': typeof FaqRoute
   '/pricing': typeof PricingRoute
+  '/privacy': typeof PrivacyRoute
+  '/terms': typeof TermsRoute
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/my-tickets': typeof AuthenticatedMyTicketsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
@@ -382,8 +409,11 @@ export interface FileRouteTypes {
     | '/auth'
     | '/colleges'
     | '/contact'
+    | '/cookies'
     | '/faq'
     | '/pricing'
+    | '/privacy'
+    | '/terms'
     | '/admin'
     | '/my-tickets'
     | '/profile'
@@ -421,8 +451,11 @@ export interface FileRouteTypes {
     | '/auth'
     | '/colleges'
     | '/contact'
+    | '/cookies'
     | '/faq'
     | '/pricing'
+    | '/privacy'
+    | '/terms'
     | '/my-tickets'
     | '/profile'
     | '/student'
@@ -460,8 +493,11 @@ export interface FileRouteTypes {
     | '/auth'
     | '/colleges'
     | '/contact'
+    | '/cookies'
     | '/faq'
     | '/pricing'
+    | '/privacy'
+    | '/terms'
     | '/_authenticated/admin'
     | '/_authenticated/my-tickets'
     | '/_authenticated/profile'
@@ -501,8 +537,11 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   CollegesRoute: typeof CollegesRoute
   ContactRoute: typeof ContactRoute
+  CookiesRoute: typeof CookiesRoute
   FaqRoute: typeof FaqRoute
   PricingRoute: typeof PricingRoute
+  PrivacyRoute: typeof PrivacyRoute
+  TermsRoute: typeof TermsRoute
   EventsSlugRoute: typeof EventsSlugRoute
   VerifyTokenRoute: typeof VerifyTokenRoute
   EventsIndexRoute: typeof EventsIndexRoute
@@ -511,6 +550,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pricing': {
       id: '/pricing'
       path: '/pricing'
@@ -523,6 +576,13 @@ declare module '@tanstack/react-router' {
       path: '/faq'
       fullPath: '/faq'
       preLoaderRoute: typeof FaqRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cookies': {
+      id: '/cookies'
+      path: '/cookies'
+      fullPath: '/cookies'
+      preLoaderRoute: typeof CookiesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/contact': {
@@ -883,8 +943,11 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   CollegesRoute: CollegesRoute,
   ContactRoute: ContactRoute,
+  CookiesRoute: CookiesRoute,
   FaqRoute: FaqRoute,
   PricingRoute: PricingRoute,
+  PrivacyRoute: PrivacyRoute,
+  TermsRoute: TermsRoute,
   EventsSlugRoute: EventsSlugRoute,
   VerifyTokenRoute: VerifyTokenRoute,
   EventsIndexRoute: EventsIndexRoute,
