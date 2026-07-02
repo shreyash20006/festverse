@@ -408,7 +408,8 @@ export const verifyPaidEventCheckout = createServerFn({ method: "POST" })
       });
     }
 
-    await supabase.from("activity_logs").insert({
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("activity_logs").insert({
       user_id: userId,
       action: "payment.completed",
       entity_type: "registration",

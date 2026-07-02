@@ -357,6 +357,47 @@ function EditEventPage() {
             </div>
           )}
 
+          {form.registration_type === "paid" && (
+            <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-2">
+              <h4 className="text-xs font-bold text-primary uppercase tracking-wider">Estimated Student Cost Summary</h4>
+              <div className="grid gap-3 sm:grid-cols-3 text-xs">
+                <div className="rounded-lg bg-card p-3 border border-border">
+                  <span className="text-[10px] text-muted-foreground block uppercase font-semibold">Regular Registration</span>
+                  <div className="mt-1 font-bold text-base text-foreground">
+                    ₹{(Number(form.registration_fee) + (Number(form.registration_fee) * (Number(form.gst_percent) || 0) / 100)).toFixed(2)}
+                  </div>
+                  <span className="text-[9px] text-muted-foreground block mt-0.5">
+                    (₹{Number(form.registration_fee).toFixed(2)} base + {Number(form.gst_percent) || 0}% GST)
+                  </span>
+                </div>
+                
+                {form.early_bird_price && (
+                  <div className="rounded-lg bg-card p-3 border border-border">
+                    <span className="text-[10px] text-muted-foreground block uppercase font-semibold text-emerald-600">Early Bird</span>
+                    <div className="mt-1 font-bold text-base text-emerald-600">
+                      ₹{(Number(form.early_bird_price) + (Number(form.early_bird_price) * (Number(form.gst_percent) || 0) / 100)).toFixed(2)}
+                    </div>
+                    <span className="text-[9px] text-muted-foreground block mt-0.5">
+                      (₹{Number(form.early_bird_price).toFixed(2)} base + {Number(form.gst_percent) || 0}% GST)
+                    </span>
+                  </div>
+                )}
+
+                {form.late_registration_price && (
+                  <div className="rounded-lg bg-card p-3 border border-border">
+                    <span className="text-[10px] text-muted-foreground block uppercase font-semibold text-amber-600">Late Registration</span>
+                    <div className="mt-1 font-bold text-base text-amber-600">
+                      ₹{(Number(form.late_registration_price) + (Number(form.late_registration_price) * (Number(form.gst_percent) || 0) / 100)).toFixed(2)}
+                    </div>
+                    <span className="text-[9px] text-muted-foreground block mt-0.5">
+                      (₹{Number(form.late_registration_price).toFixed(2)} base + {Number(form.gst_percent) || 0}% GST)
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center gap-3 border-t border-border/50 pt-4 mt-2">
             <Switch checked={form.featured} onCheckedChange={(v) => set("featured", v)} />
             <Label className="cursor-pointer">Featured on home page</Label>

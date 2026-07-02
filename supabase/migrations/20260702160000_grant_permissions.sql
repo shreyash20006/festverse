@@ -50,4 +50,14 @@ grant select on public.activity_logs to authenticated;
 -- 11. colleges
 grant select, insert, update, delete on public.colleges to authenticated;
 
+-- 12. volunteers
+grant select, insert, update, delete on public.volunteers to authenticated;
+
+-- 13. notices
+grant select, insert, update, delete on public.notices to authenticated;
+
+-- 14. support_tickets
+grant select, insert, update, delete on public.support_tickets to authenticated;
+
+
 
