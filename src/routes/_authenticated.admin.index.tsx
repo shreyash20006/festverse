@@ -344,22 +344,22 @@ function AdminDashboard() {
   return (
     <div className="mx-auto max-w-[1400px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-[24px] border border-border bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-600 p-6 text-white shadow-elevated sm:p-8">
-        <div className="absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-20 right-32 h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl" />
-        <div className="relative grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+      <div className="relative overflow-hidden rounded-[32px] border border-white/10 bg-gradient-to-br from-indigo-950 via-indigo-900 to-slate-950 p-6 text-white shadow-elevated sm:p-8">
+        <div className="absolute -right-20 -top-20 h-80 w-80 rounded-full bg-indigo-500/20 blur-[100px] pointer-events-none animate-pulse" />
+        <div className="absolute -left-20 -bottom-20 h-80 w-80 rounded-full bg-violet-600/10 blur-[100px] pointer-events-none" />
+        <div className="relative grid gap-6 lg:grid-cols-[1fr_240px] lg:items-center">
           <div>
-            <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-[0.18em] text-white/70">
-              <Sparkles className="h-3.5 w-3.5" />
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-white/50">
+              <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
               {format(now, "EEEE, d MMMM yyyy")}
             </div>
-            <h1 className="mt-2 font-display text-3xl font-bold tracking-tight sm:text-4xl">
-              Welcome back 👋
+            <h1 className="mt-2.5 font-display text-3xl font-extrabold tracking-tight sm:text-4xl bg-clip-text text-transparent bg-gradient-to-r from-white via-white to-white/80">
+              TGPCOP Control Center 👋
             </h1>
-            <p className="mt-1 max-w-xl text-sm text-white/80">
-              Here's what's happening across your campus today. {stats?.attendedToday ?? 0} check-ins so far, {stats?.payPending ?? 0} pending payments.
+            <p className="mt-1.5 max-w-xl text-xs text-white/60 font-medium">
+              Here is what's happening across your campus today. We have recorded <span className="text-white font-bold">{stats?.attendedToday ?? 0} check-ins</span> and <span className="text-white font-bold">{stats?.payPending ?? 0} pending payments</span>.
             </p>
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            <div className="mt-6 grid gap-4 sm:grid-cols-3">
               <HeroPill
                 icon={Calendar}
                 label="Next event"
@@ -380,11 +380,12 @@ function AdminDashboard() {
               />
             </div>
           </div>
-          <div className="flex flex-wrap gap-2 lg:flex-col lg:items-stretch">
-            <QuickAction icon={Plus} label="Create event" to="/admin/events/new" primary />
-            <QuickAction icon={QrCode} label="Scan QR" to="/admin/scanner" />
-            <QuickAction icon={FileDown} label="Export report" to="/admin/registrations" />
-            <QuickAction icon={Megaphone} label="Send notice" />
+          <div className="flex flex-col gap-2.5 bg-white/5 p-4 rounded-3xl border border-white/10 backdrop-blur-md">
+            <div className="text-[9px] font-bold uppercase tracking-[0.15em] text-white/40 mb-1 text-center">Quick Actions</div>
+            <QuickAction icon={Plus} label="Create Event" to="/admin/events/new" primary />
+            <QuickAction icon={QrCode} label="Scan Tickets" to="/admin/scanner" />
+            <QuickAction icon={FileDown} label="Export CSV" to="/admin/registrations" />
+            <QuickAction icon={Megaphone} label="Broadcast Notice" to="/admin/notices" />
           </div>
         </div>
       </div>
@@ -524,13 +525,13 @@ function HeroPill({
   sub: string;
 }) {
   return (
-    <div className="rounded-2xl border border-white/15 bg-white/10 p-3 backdrop-blur-md">
-      <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-white/70">
-        <Icon className="h-3 w-3" />
+    <div className="group rounded-[20px] border border-white/10 bg-white/5 p-4 backdrop-blur-md transition-all duration-300 hover:bg-white/10 hover:translate-y-[-2px] hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
+      <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-white/60 group-hover:text-white/80 transition-colors">
+        <Icon className="h-3.5 w-3.5" />
         {label}
       </div>
-      <div className="mt-1 truncate font-display text-base font-bold">{value}</div>
-      <div className="truncate text-[11px] text-white/70">{sub}</div>
+      <div className="mt-2 truncate font-display text-lg font-bold text-white tracking-tight">{value}</div>
+      <div className="mt-0.5 truncate text-[11px] font-medium text-white/60 group-hover:text-white/80 transition-colors">{sub}</div>
     </div>
   );
 }
@@ -547,15 +548,23 @@ function QuickAction({
   primary?: boolean;
 }) {
   const cls = primary
-    ? "bg-white text-blue-700 hover:bg-white/90"
-    : "bg-white/10 text-white hover:bg-white/15 border border-white/15";
+    ? "bg-white text-indigo-950 hover:bg-neutral-100 hover:shadow-glow-soft hover:scale-[1.03]"
+    : "bg-white/10 text-white hover:bg-white/15 border border-white/10 backdrop-blur-md hover:scale-[1.03]";
   const inner = (
-    <span className={`inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-sm font-semibold transition-all ${cls}`}>
-      <Icon className="h-4 w-4" />
+    <span className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all duration-300 w-full cursor-pointer shadow-sm ${cls}`}>
+      <Icon className="h-4 w-4 shrink-0" />
       {label}
     </span>
   );
-  return to ? <Link to={to}>{inner}</Link> : <button>{inner}</button>;
+  return to ? (
+    <Link to={to} className="w-full flex">
+      {inner}
+    </Link>
+  ) : (
+    <button className="w-full flex outline-none border-none bg-transparent">
+      {inner}
+    </button>
+  );
 }
 
 function EventPerformanceCard({ event: e }: { event: any }) {
@@ -567,64 +576,64 @@ function EventPerformanceCard({ event: e }: { event: any }) {
     <motion.div
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
-      className="group flex flex-col rounded-2xl border border-border bg-background/50 p-4 transition-all hover:-translate-y-0.5 hover:shadow-card"
+      className="group flex flex-col rounded-[24px] border border-border bg-gradient-to-b from-card to-card/50 p-5 transition-all duration-300 hover:-translate-y-1 hover:border-primary/20 hover:shadow-elevated"
     >
-      <div className="flex items-start gap-3">
-        <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-border bg-muted">
+      <div className="flex items-start gap-4">
+        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-2xl border border-border bg-muted/30 shadow-sm relative group-hover:scale-105 transition-transform duration-300">
           {e.banner_url ? (
             <img src={e.banner_url} alt="" className="h-full w-full object-cover" />
           ) : (
-            <div className="grid h-full w-full place-items-center text-muted-foreground">
-              <Calendar className="h-5 w-5" />
+            <div className="grid h-full w-full place-items-center text-muted-foreground/40 bg-muted/20">
+              <Calendar className="h-6 w-6" />
             </div>
           )}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             {isLive ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-rose-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:bg-rose-500/15">
-                <span className="h-1 w-1 animate-pulse rounded-full bg-rose-600" /> Live
+              <span className="inline-flex items-center gap-1 rounded-full bg-rose-500/10 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-rose-600 dark:text-rose-400">
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-500" /> Live
               </span>
             ) : (
-              <span className="inline-flex rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:bg-blue-500/15">
+              <span className="inline-flex rounded-full bg-indigo-500/10 px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
                 {e.status}
               </span>
             )}
-            <span className="truncate text-[11px] text-muted-foreground">
+            <span className="truncate text-[10px] font-bold text-muted-foreground/60">
               {format(new Date(e.start_at), "d MMM · h:mm a")}
             </span>
           </div>
-          <h3 className="mt-1 truncate font-display text-sm font-bold tracking-tight">{e.title}</h3>
+          <h3 className="mt-1.5 truncate font-display text-sm font-bold tracking-tight text-foreground">{e.title}</h3>
         </div>
       </div>
-      <div className="mt-3 space-y-2">
-        <Metric label="Registrations" value={e.regs} cap={e.capacity} pct={capacityPct} color="bg-blue-500" />
+      <div className="mt-4 space-y-3">
+        <Metric label="Registrations" value={e.regs} cap={e.capacity} pct={capacityPct} color="bg-gradient-to-r from-blue-500 to-indigo-500" />
         <Metric
           label="Attendance"
           value={e.checkedIn}
           cap={e.regs}
           pct={attendancePct}
-          color="bg-emerald-500"
+          color="bg-gradient-to-r from-emerald-500 to-teal-500"
         />
       </div>
-      <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
+      <div className="mt-4 flex items-center justify-between border-t border-border/80 pt-4">
         <div>
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Revenue</div>
-          <div className="font-display text-sm font-bold tabular-nums">
+          <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">Collected Revenue</div>
+          <div className="font-display text-base font-extrabold text-foreground tabular-nums mt-0.5">
             ₹{Number(e.revenue || 0).toLocaleString("en-IN")}
           </div>
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-2">
           <Link
             to="/events/$slug"
             params={{ slug: e.slug }}
-            className="rounded-lg border border-border bg-background px-2.5 py-1 text-[11px] font-semibold hover:bg-muted"
+            className="rounded-xl border border-border bg-background px-3.5 py-1.5 text-xs font-bold hover:bg-muted transition-colors"
           >
             View
           </Link>
           <Link
             to="/admin/events"
-            className="rounded-lg bg-blue-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-blue-700"
+            className="rounded-xl bg-primary text-primary-foreground px-3.5 py-1.5 text-xs font-bold hover:opacity-90 shadow-glow transition-all"
           >
             Manage
           </Link>

@@ -19,22 +19,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { createCollegeTenant } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/_authenticated/super-admin")({
-  beforeLoad: async ({ location }) => {
-    const { data: sess } = await supabase.auth.getSession();
-    if (!sess.session) {
-      throw redirect({ to: "/auth", search: { redirect: location.pathname } });
-    }
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", sess.session.user.id);
-    const isSuper = (roles ?? []).some((r: any) => r.role === "super_admin");
-    if (!isSuper) {
-      throw redirect({ to: "/student" });
-    }
+  beforeLoad: async () => {
+    throw redirect({ to: "/admin" });
   },
-  head: () => ({ meta: [{ title: `Super Admin · ${BRAND.appName}` }] }),
-  component: SuperAdminDashboard,
+  component: () => null,
 });
 
 function SuperAdminDashboard() {

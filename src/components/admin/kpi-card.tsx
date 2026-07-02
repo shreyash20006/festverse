@@ -73,36 +73,50 @@ export function KpiCard({ icon: Icon, label, value, delta, spark, format, accent
     delta == null
       ? "text-muted-foreground bg-muted"
       : delta > 0
-      ? "text-emerald-600 bg-emerald-50 dark:bg-emerald-500/10"
+      ? "text-emerald-600 bg-emerald-500/10"
       : delta < 0
-      ? "text-rose-600 bg-rose-50 dark:bg-rose-500/10"
+      ? "text-rose-600 bg-rose-500/10"
       : "text-muted-foreground bg-muted";
+
+  const glowColorMap: Record<NonNullable<Props["accent"]>, string> = {
+    blue: "bg-blue-500/5 dark:bg-blue-500/10",
+    violet: "bg-violet-500/5 dark:bg-violet-500/10",
+    emerald: "bg-emerald-500/5 dark:bg-emerald-500/10",
+    amber: "bg-amber-500/5 dark:bg-amber-500/10",
+    rose: "bg-rose-500/5 dark:bg-rose-500/10",
+    cyan: "bg-cyan-500/5 dark:bg-cyan-500/10",
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-      className="group relative overflow-hidden rounded-[20px] border border-border bg-card p-5 shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-card"
+      className="group relative overflow-hidden rounded-[24px] border border-border bg-gradient-to-b from-card to-card/75 p-5 shadow-soft transition-all duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-elevated"
     >
-      <div className="flex items-start justify-between gap-3">
+      {/* Decorative Corner Glow */}
+      <div className={`absolute -right-8 -bottom-8 h-28 w-28 rounded-full ${glowColorMap[accent]} blur-2xl opacity-50 transition-all duration-300 group-hover:scale-125 group-hover:opacity-100 pointer-events-none`} />
+
+      <div className="flex items-start justify-between gap-3 relative z-10">
         <div className="min-w-0">
-          <div className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">{label}</div>
-          <div className="mt-2 font-display text-3xl font-bold tracking-tight tabular-nums">
+          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{label}</div>
+          <div className="mt-2.5 font-display text-3xl font-bold tracking-tight text-foreground tabular-nums">
             <AnimatedNumber value={value} format={format} />
           </div>
         </div>
-        <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${a.bg} ${a.fg}`}>
+        <div className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 ${a.bg} ${a.fg} shadow-sm`}>
           <Icon className="h-5 w-5" />
         </div>
       </div>
-      <div className="mt-3 flex items-end justify-between gap-3">
-        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ${trendColor}`}>
+
+      <div className="mt-4 flex items-end justify-between gap-3 relative z-10">
+        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold ${trendColor}`}>
           <Trend className="h-3 w-3" />
           {delta == null ? "—" : `${delta > 0 ? "+" : ""}${delta.toFixed(1)}%`}
-          <span className="font-normal opacity-70">vs last month</span>
+          <span className="font-normal opacity-70 ml-1">vs last month</span>
         </span>
         {spark && spark.length > 1 && (
-          <div className={`w-24 ${a.fg}`}>
+          <div className={`w-24 ${a.fg} opacity-80 group-hover:opacity-100 transition-opacity`}>
             <Sparkline data={spark} color={a.stroke} />
           </div>
         )}
