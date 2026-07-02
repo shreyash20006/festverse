@@ -47,3 +47,7 @@ end $$;
 -- 10. activity_logs
 grant select on public.activity_logs to authenticated;
 
+-- 11. colleges
+grant select, insert, update, delete on public.colleges to authenticated;
+
+
