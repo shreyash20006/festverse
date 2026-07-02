@@ -18,6 +18,8 @@ function AdminEventsList() {
   const qc = useQueryClient();
   const remove = useServerFn(deleteEvent);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 10;
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["admin", "events", "all"],
@@ -29,6 +31,9 @@ function AdminEventsList() {
       return data ?? [];
     },
   });
+
+  const totalPages = Math.ceil(events.length / itemsPerPage);
+  const paginatedEvents = events.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
   const onDelete = async (id: string, title: string) => {
     if (!confirm(`Delete "${title}"? This cannot be undone.`)) return;
@@ -76,7 +81,7 @@ function AdminEventsList() {
               <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">Loading…</td></tr>
             ) : events.length === 0 ? (
               <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No events yet.</td></tr>
-            ) : events.map((e: any) => (
+            ) : paginatedEvents.map((e: any) => (
               <tr key={e.id} className="border-b border-border last:border-none hover:bg-muted/30">
                 <td className="px-4 py-3">
                   <Link to="/events/$slug" params={{ slug: e.slug }} className="font-semibold hover:underline">
@@ -115,6 +120,30 @@ function AdminEventsList() {
           </tbody>
         </table>
       </div>
+
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between px-2">
+          <p className="text-xs text-muted-foreground">
+            Showing {((page - 1) * itemsPerPage) + 1} to {Math.min(page * itemsPerPage, events.length)} of {events.length} events
+          </p>
+          <div className="flex gap-2">
+            <button
+              disabled={page === 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              className="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-semibold hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            >
+              Previous
+            </button>
+            <button
+              disabled={page === totalPages}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              className="rounded-xl border border-border bg-background px-3 py-1.5 text-xs font-semibold hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

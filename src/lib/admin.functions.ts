@@ -151,15 +151,28 @@ export const createOrUpdateEvent = createServerFn({ method: "POST" })
       created_by: context.userId,
     };
 
-    // Use admin client for writes to bypass potential RLS issues
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    // Use admin client for writes to bypass potential RLS issues if key is present
+    let supabaseClient = context.supabase;
+    const hasServiceRole = !!(
+      process.env.SUPABASE_SERVICE_ROLE_KEY || 
+      process.env.VITE_SUPABASE_SERVICE_ROLE_KEY || 
+      process.env.MY_SUPABASE_SERVICE_ROLE_KEY
+    );
+    if (hasServiceRole) {
+      try {
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        if (supabaseAdmin) supabaseClient = supabaseAdmin;
+      } catch (e) {
+        console.warn("Failed to load supabaseAdmin, falling back to user client:", e);
+      }
+    }
 
     let evId = data.id;
     if (data.id) {
-      const { error } = await supabaseAdmin.from("events").update(row).eq("id", data.id);
+      const { error } = await supabaseClient.from("events").update(row).eq("id", data.id);
       if (error) throw new Error(error.message);
     } else {
-      const { data: ev, error } = await supabaseAdmin
+      const { data: ev, error } = await supabaseClient
         .from("events")
         .insert(row)
         .select("id")
@@ -185,7 +198,7 @@ export const createOrUpdateEvent = createServerFn({ method: "POST" })
         registration_deadline: data.event.registration_deadline || null,
       };
 
-      const { error: pricingErr } = await supabaseAdmin
+      const { error: pricingErr } = await supabaseClient
         .from("event_pricing")
         .upsert(pricingRow, { onConflict: "event_id" });
       
