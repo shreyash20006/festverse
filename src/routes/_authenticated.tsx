@@ -44,15 +44,8 @@ export const Route = createFileRoute("/_authenticated")({
     // Skip verification check if they are already visiting MFA pages
     if (isMfaPage) return;
 
-    // 4. PRN Verification Policy (Admins / Staff bypass this entirely)
-    if (isStaff) return;
-    if (isVerifyPrnPage) return;
-
-    const profile = await profileService.getProfile(uid);
-
-    if (!profile?.verified) {
-      throw redirect({ to: "/verify-prn", search: { redirect: location.pathname } as never });
-    }
+    // 4. PRN Verification bypassed to allow immediate access
+    return;
   },
   component: () => <Outlet />,
 });
