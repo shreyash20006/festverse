@@ -1,12 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
-import { Button } from "@/components/ui/button";
-import { Check, Info, HelpCircle } from "lucide-react";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/pricing")({
+  beforeLoad: () => {
+    throw redirect({ to: "/" });
+  },
   head: () => ({ meta: [{ title: "Pricing Plans · FestVerse" }] }),
-  component: PricingPage,
+  component: () => null,
 });
 
 const PLANS = [

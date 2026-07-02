@@ -46,46 +46,22 @@ const Ctx = createContext<TenantCtx>({
 });
 
 export function getTenantFromUrl(): { type: 'subdomain' | 'path' | 'root'; slug: string | null } {
-  if (typeof window === "undefined") {
-    return { type: "root", slug: null };
-  }
-  const host = window.location.hostname;
-  const parts = host.split(".");
-  const isLocalhost = host === "localhost" || host === "127.0.0.1" || host.startsWith("192.168.");
-
-  // Exclude common subdomains like 'www'
-  if (parts.length > (isLocalhost ? 1 : 2) && parts[0] !== "www") {
-    return { type: "subdomain", slug: parts[0] };
-  }
-
-  // Fallback to checking path /c/slug
-  const pathParts = window.location.pathname.split("/");
-  if (pathParts[1] === "c" && pathParts[2]) {
-    return { type: "path", slug: pathParts[2] };
-  }
-
-  return { type: "root", slug: null };
+  return { type: "root", slug: "tgpcop" };
 }
 
 export function TenantProvider({ children }: { children: ReactNode }) {
   const [college, setCollege] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isRoot, setIsRoot] = useState(true);
+  const [isRoot, setIsRoot] = useState(false);
 
   useEffect(() => {
     let active = true;
     const resolveTenant = async () => {
-      const tenant = getTenantFromUrl();
-      if (!tenant.slug) {
-        if (active) { setIsRoot(true); setLoading(false); }
-        return;
-      }
-
       try {
         const { data, error } = await supabase
           .from("colleges")
           .select("*")
-          .eq("slug", tenant.slug)
+          .eq("slug", "tgpcop")
           .eq("is_active", true)
           .maybeSingle();
 
@@ -94,13 +70,19 @@ export function TenantProvider({ children }: { children: ReactNode }) {
             setCollege(data);
             setIsRoot(false);
           } else {
-            const { data: fallback } = await supabase
+            // Fallback to first college if tgpcop is not found
+            const { data: first } = await supabase
               .from("colleges")
               .select("*")
-              .eq("slug", "tgpcop")
+              .eq("is_active", true)
+              .limit(1)
               .maybeSingle();
-            if (fallback) { setCollege(fallback); setIsRoot(false); }
-            else setIsRoot(true);
+            if (first) {
+              setCollege(first);
+              setIsRoot(false);
+            } else {
+              setIsRoot(true);
+            }
           }
         }
       } catch (err) {

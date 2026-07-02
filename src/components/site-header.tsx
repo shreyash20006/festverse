@@ -26,8 +26,6 @@ import { useTenant } from "@/components/tenant-provider";
 const publicNavItems = [
   { to: "/", label: "Home" },
   { to: "/events", label: "Events" },
-  { to: "/colleges", label: "Colleges" },
-  { to: "/pricing", label: "Pricing" },
   { to: "/about", label: "About" },
   { to: "/contact", label: "Contact" },
   { to: "/faq", label: "FAQ" },
@@ -131,18 +129,6 @@ export function SiteHeader() {
                     My Tickets
                   </Link>
                 )}
-
-                {isSuperAdmin && (
-                  <button
-                    onClick={() => {
-                      setMobileOpen(false);
-                      setDialogOpen(true);
-                    }}
-                    className="flex items-center gap-3 text-left w-full rounded-xl px-3.5 py-3 text-sm font-semibold text-blue-600 dark:text-blue-400 transition-all hover:bg-blue-50 dark:hover:bg-blue-950/20"
-                  >
-                    <Plus className="h-4 w-4" /> Create College
-                  </button>
-                )}
               </nav>
             </SheetContent>
           </Sheet>
@@ -180,15 +166,6 @@ export function SiteHeader() {
               </Link>
             );
           })}
-
-          {isSuperAdmin && (
-            <button
-              onClick={() => setDialogOpen(true)}
-              className="rounded-full px-3.5 py-1.5 text-[11px] font-bold tracking-wide uppercase transition-all duration-200 cursor-pointer text-blue-600 dark:text-blue-400 border border-blue-500/20 bg-blue-50/50 dark:bg-blue-950/20 hover:bg-blue-100 dark:hover:bg-blue-950/40 flex items-center gap-1"
-            >
-              <Plus className="h-3 w-3" /> Create College
-            </button>
-          )}
         </nav>
 
         {/* Auth / Account Trigger */}
@@ -270,46 +247,6 @@ export function SiteHeader() {
       </div>
 
       {/* Super Admin Create College Modal */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="rounded-3xl border border-border/80 bg-card/95 backdrop-blur-md max-w-md shadow-elevated">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-bold tracking-tight">Launch College Tenant</DialogTitle>
-            <DialogDescription className="text-xs">
-              Instantiate a branded event portal for a new college.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleCreateCollege} className="space-y-4 mt-2">
-            <div className="space-y-1">
-              <Label htmlFor="c-name" className="text-xs font-semibold">College Name</Label>
-              <Input
-                id="c-name"
-                value={colName}
-                onChange={(e) => setColName(e.target.value)}
-                placeholder="e.g. Harvard University"
-                required
-                className="rounded-xl h-10 border-border/85"
-              />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="c-slug" className="text-xs font-semibold">URL Subdomain Slug</Label>
-              <div className="flex items-center gap-1.5">
-                <Input
-                  id="c-slug"
-                  value={colSlug}
-                  onChange={(e) => setColSlug(e.target.value.replace(/[^a-zA-Z0-9-]/g, ""))}
-                  placeholder="e.g. harvard"
-                  required
-                  className="rounded-xl h-10 border-border/85 text-right font-mono"
-                />
-                <span className="text-xs text-muted-foreground font-mono">.{BRAND.defaultDomain}</span>
-              </div>
-            </div>
-            <Button type="submit" disabled={busy} className="w-full rounded-full bg-gradient-brand text-white mt-4 h-10 font-bold active:scale-98">
-              {busy ? "Provisioning..." : "Launch Tenant Portal"}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
     </header>
   );
 }

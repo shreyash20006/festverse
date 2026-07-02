@@ -1,16 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
-import { useState } from "react";
-import { Search, MapPin, Users, Calendar, ArrowUpRight, GraduationCap } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/colleges")({
+  beforeLoad: () => {
+    throw redirect({ to: "/" });
+  },
   head: () => ({ meta: [{ title: "Colleges · FestVerse" }] }),
-  component: CollegesPage,
+  component: () => null,
 });
 
 const MOCK_COLLEGE_DETAILS: Record<string, { city: string; events: number; students: number; desc: string }> = {
