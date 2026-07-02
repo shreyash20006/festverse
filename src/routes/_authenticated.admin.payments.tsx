@@ -314,7 +314,7 @@ function PaymentsDashboard() {
           { label: "Today's Revenue", val: `₹${stats.todayRev.toLocaleString("en-IN")}`, desc: "Captured today", icon: Coins, color: "text-primary bg-primary/10" },
           { label: "Monthly Revenue", val: `₹${stats.monthRev.toLocaleString("en-IN")}`, desc: "Current calendar month", icon: Coins, color: "text-violet-500 bg-violet-500/10" },
           { label: "Total Revenue", val: `₹${stats.totalRev.toLocaleString("en-IN")}`, desc: "Lifetime earnings", icon: Coins, color: "text-emerald-500 bg-emerald-500/10" },
-          { label: "Success Rate", val: `${stats.successCount + stats.refundedCount}/${stats.payments.length}`, desc: "Processed payments", icon: CheckCircle2, color: "text-blue-500 bg-blue-500/10" },
+          { label: "Success Rate", val: `${stats.successCount + stats.refundedCount}/${payments.length}`, desc: "Processed payments", icon: CheckCircle2, color: "text-blue-500 bg-blue-500/10" },
         ].map((card, i) => (
           <div key={i} className="rounded-3xl border border-border bg-card p-5 shadow-card flex flex-col justify-between">
             <div>
