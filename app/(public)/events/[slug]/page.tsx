@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { EventDetailClient } from "@/components/events/event-detail-client";
 
+export const dynamic = "force-dynamic";
+
 type Props = { params: { slug: string } };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {

@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { LandingHero } from "@/components/landing/hero";
+
+export const dynamic = "force-dynamic";
 import { LandingEvents } from "@/components/landing/events-section";
 import { LandingHowItWorks } from "@/components/landing/how-it-works";
 import { LandingAbout } from "@/components/landing/about";

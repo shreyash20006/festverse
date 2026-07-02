@@ -5,6 +5,7 @@ import { CheckCircle, Calendar, Award, XCircle } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Verify Certificate" };
 
 export default async function VerifyCertPage({ params }: { params: { token: string } }) {
