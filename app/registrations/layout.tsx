@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { StudentLayout } from "@/components/layout/student-layout";
 
+export const dynamic = "force-dynamic";
+
 export default async function RegistrationsLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

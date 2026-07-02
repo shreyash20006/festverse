@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { StudentLayout } from "@/components/layout/student-layout";
 import type { Metadata } from "next";
 
+export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "My Dashboard" };
 
 export default async function StudentDashboardLayout({ children }: { children: React.ReactNode }) {
